@@ -1,0 +1,425 @@
+\documentclass[12pt]{book}              
+%\parindent0pt  \parskip10pt             % make block paragraphs
+%\raggedright                            % do not right justify
+
+\usepackage[margin=2cm]{geometry}
+\usepackage{paralist}
+%\usepackage{url}
+\usepackage{siunitx}
+\usepackage{listings}
+\usepackage{graphicx} 
+\usepackage{booktabs} % for much better looking tables
+\usepackage{array} % for better arrays (eg matrices) in maths
+\usepackage{verbatim} % adds environment for commenting out blocks of text & for
+\usepackage{subcaption} % make it possible to include more than one captioned fi
+\usepackage{float}
+\usepackage[hyperfootnotes=false]{hyperref}
+%\floatstyle{boxed} 
+\restylefloat{figure}
+
+\lstset{
+  framexleftmargin=10mm, 
+  tabsize=2,
+  language=c, 
+  frame=single,
+  numbers=none,
+  keepspaces,
+  basicstyle=\footnotesize,
+%  basicstyle=\small\ttfamily,
+}
+
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+
+\usepackage[
+    type={CC},
+    modifier={by-sa},
+    version={4.0},
+]{doclicense}
+
+
+\title{Computer Networks - Laboratory manual}    % Supply information
+\author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
+\date{\today\\ version 1.0}  %   Use current date. 
+
+%%%%%% macros %%%%%%5
+\newcommand{\kathara}{Kathar\'a}
+
+%%% inserting figures 
+%%% arg 1: figure file (no directory)
+%%% arg 2: scale factor
+%%% arg 3: caption
+%%% labels are #1.fig
+\newcommand{\insfig}[3]{
+\begin{figure}[tb]
+\begin{center}
+\includegraphics[scale=#2]{figs-manual/#1}
+\caption{#3\label{#1.fig}}
+\end{center}
+\end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\renewcommand{\chaptername}{Activity}
+
+% Note that book class by default is formatted to be printed back-to-back.
+\begin{document}                        % End of preamble, start of text.
+\frontmatter                            % only in book class (roman page #s)
+\maketitle    
+\doclicenseThis                      
+\tableofcontents                        % Print table of contents
+
+\mainmatter % arabic page nrs
+
+\chapter{Lab 0: An Introduction to the Tools }
+
+\section{Objectives}
+
+\begin{itemize}[--]
+\item Using the network emulator available freely at
+  \url{kathara.org}, students will define a simple local network with
+  two hosts and
+  will use the netcat utility to transfer data between the hosts.
+
+\item If the network is properly defined, the emulator will correctly
+  configure IPv4 addresses for the two hosts. Using standard commands
+  available for hosts running Unix based operating systems, the
+  students will configure IPv6 addresses and will test the
+  connectivity using the IPv6 network protocols.
+
+%% \item Students will use the \emph{tcpdump} program to capture network
+%%   packets. Students will examine captured packets with
+%%   \emph{Wireshark} on their personal computers, or with an online
+%%   network packet visualization tool such as
+%%   \url{https://hpd.gasmi.net/}. Students will identify the protocols
+%%   that participated in the creation of the captured packets. 
+\end{itemize}
+
+
+\section{Lab activities}
+\subsection{Installing and configuring \emph{\kathara}}
+
+The first step needed to carry out most of the activities described in
+this lab manual is to install a network emulator. The emulator is
+software that simulates, using virtualisation technology, several
+computers on a single \emph{host machine}. The software also simulates
+Ethernet local area networks to which several simulated hosts can be
+connected to. Students can open terminal windows with root access on
+the simulated hosts and can use the standard utilities \emph{almost}
+like in a real environment.
+
+This lab manual uses a network emulator called \emph{\kathara},
+available at \url{kathara.org}. The lab activities described here make
+specific use of \kathara\ commands, however, many of these
+activities can be adjusted to work with any other network emulator or
+even with real networks. 
+
+\begin{tcolorbox}[title=Lab safety note]
+  Students are cautioned to exercise common sense when attempting any
+  of the commands described in this manual on real computer
+  networks. Please consult the UofL policies concerning the use of the
+  data network \cite{its-policies} and also be aware of the federal
+  laws that govern the use of computers and data networks
+  \cite{law-canada,law-us}. 
+\end{tcolorbox}
+
+In this section of the lab, students will install \kathara\ on their
+home computers (optional step) and will configure their school
+account to use \kathara \cite{kathara-wiki}. Please note that the school network has \kathara\ already installed. More information
+including a few examples of commands are provided in Section
+\ref{examples.lab0}. The following sequence of operations is
+suggested: 
+
+\begin{enumerate}[(1)]
+\item If only configuring an already installed system, go to step
+  \ref{config-step}. You will need root access to the computer you are
+  installing \kathara\ on. Please do not execute this step on the
+  school network.
+
+Download the installation files for \kathara\ from
+  \url{https://github.com/KatharaFramework/Kathara/releases}. 
+Download both the \verb$KatharaGUI$ package for your platform and the
+source code package. The source code package contains additional
+folders, for example the \verb$bin$ folder, needed to run the
+emulator. Unpack both package files into a system folder, such as
+\verb$/opt/kathara$. 
+
+Follow the installation instructions from
+\url{https://github.com/KatharaFramework/Kathara/wiki/Linux} for a
+Linux installation or the appropriate instructions for your platform
+available from the wiki page \cite{kathara-wiki}. 
+
+\item\label{config-step} Define the environment variable
+  \verb$NETKIT_HOME$ to point to the \verb$bin$ folder under \kathara's
+  installation directory (step 6 in the Linux installation
+  instructions). 
+\end{enumerate}
+
+
+\subsection{Creating a first network}
+
+To test \kathara\ and to begin the second part of this lab, we must
+define the network to be simulated. This definition resides in a
+collection of configuration files that contains the topology of the
+network as well as configuration files loaded by the virtual nodes in
+the network. We call these configuration files \emph{lab files}.
+
+Lab files are most easily created using the KatharaGUI application,
+strangely available under the systems folder you installed \kathara\ 
+(for example \verb$/opt/kathara/$) 
+or under \verb$/opt/kathara/GUI/$ in your CS network at school. 
+
+The following fields should be filled:
+\begin{description}
+\item[Lab information:] it is a good idea to add a description, so you
+  can distinguish the generated files later on. When submitting
+  exercises for an assignment, be sure to enter your name in the
+  author field.
+\item[Machine informations:] Fill a name for the first machine
+  (host). It is a good idea to provide unique names to the hosts you
+  create. Choose \emph{terminal} as the type for the virtual
+  machine, which generates the simplest startup scripts for your
+  virtual machine. The other types allow additional configuration
+  scripts to be loaded by your virtual machine at startup. Press the
+  \emph{Add machine} button to add more virtual machines to the lab. 
+\item[Network interfaces:] Every virtual machine you define should
+  have at least one network interface. A default interface,
+  \verb$eth0$, is available, but you must choose the so called
+  \emph{collision domain} or LAN for that interface. These are
+  typically upper case letters, A, B, C, etc, but can also be any
+  string. Press the \emph{Add interface} button to add additional
+  network interfaces which would be connected to different collision
+  domains. Routers, for example, are expected to have more than one
+  interface and be connected to more than one LAN.  Provide an IP
+  address under field \emph{IP/Net} if you wish to have the interface
+  ready to use once the virtual machine starts up.
+\end{description}
+
+\smallskip
+To create a simple lab consisting of two virtual machines connected together
+in a single Ethernet LAN, follow these steps:
+
+\begin{enumerate}[(1)]
+\item Start the KatharaGUI application. Define a lab with the
+  description ``Lab 0''. Add two machines with names ``pc1'' and
+  ``pc2'' with IP addresses ``10.0.0.1/24'' and ``10.0.0.2/24''
+  respectively. This type of IP address is called \emph{CIDR} address
+  (\url{https://searchnetworking.techtarget.com/definition/CIDR}). 
+  Define the same collision domain, ex ``A'' for the interfaces of
+  both machines. This makes sure both pc1 and pc2 are connected to the
+  same LAN. 
+
+\item Once the configuration is defined, click on the ``Graph'' button
+  at the top of the KatharaGUI window to visualize your network (see
+  Fig.~\ref*{2nodes.fig}). Press
+  ``Download Lab'' to download a zip file with the necessary lab
+  configuration files. Unpack the zip file to a sub-folder somewhere
+  in your working directory, for example in a folder named
+  ``Lab0''. You can inspect the generated files. They are text files.
+
+\item Press ``Save/Load'' to export your lab configuration data to a
+  file for later use.
+\end{enumerate}
+
+\insfig{2nodes}{.5}{A simple network configuration consisting of two
+  hosts connected to the same LAN}
+
+
+\subsection{Testing the first network}
+
+Once the lab configuration file is defined, we can start \kathara\ and
+experiment with our first network.
+
+\begin{enumerate}[(1)]
+\item Change your current directory in the folder where you unpacked
+  the lab files. Run the \kathara\ command
+  \verb$lstart$ (see Section \ref{examples.lab0} for additional
+    information).
+
+  \item Depending on the options passed when you started the lab, you
+    should have access to two shell windows with user root, one on pc1
+    and the other on pc2. Run \verb$ifconfig$ to check the IP address
+    information on both hosts. Run \verb$pping$ to check for
+    connectivity between the two hosts. See Section
+    \ref{examples.lab0}.
+
+  \item Unfortunately, command \verb$netcat$ (also known as \verb$nc$)
+    is not available on the virtual machines, but it can be accessed
+    from your home directory on the host computer, the computer that
+    is running the network simulation. See Section \ref{examples.lab0}
+    about how to execute netcat.
+
+    Run netcat in listening mode on one of the hosts. From the other
+    host,  connect netcat to the instance you left listening.
+
+  \item Use netcat to transfer a text file from one host to the
+    other. 
+\end{enumerate}
+
+
+
+\subsection{Examples and other resources}\label{examples.lab0}
+
+\begin{description}
+\item[Configure \kathara:]
+Replace the path to the bin folder in this example with your actual
+path. You can insert this line in your \verb$.bash_rc$ file so that it
+is executed every time you open a new terminal.
+\begin{lstlisting}[language=bash]
+  export NETKIT_HOME=/opt/kathara/bin
+\end{lstlisting}
+
+\item[Start a \kathara\ lab using gnome-terminal as terminal instead
+  of xterm:]
+  Change current directory to the directory with the lab files. Then,
+\begin{lstlisting}[language=bash]
+  /opt/kathara/bin/lstart --xterm=gnome-terminal
+\end{lstlisting}
+
+\item[Stop a running \kathara\ lab:] Change current directory to the
+  directory with the lab files. Then, 
+\begin{lstlisting}[language=bash]
+  /opt/kathara/bin/lclean
+\end{lstlisting}
+
+\item[Start a \kathara\ lab without opening terminals for each virtual
+  machine:] This operation requires root privileges on the host
+  machine (the computer running the simulation), thus you can only run
+  this on your personal computer.
+
+  When the number of virtual machines is large, having a terminal
+  window open for each machine is annoying, In addition, you most
+  likely need to work from within only a handful of virtual
+  machines. Start the lab using the \verb$--noterminals$ option. Then
+  use Linux container management commands (the virtualisation
+  technique that \kathara\ is built on) to find out the process ID of
+  the simulated host you want to interact with. Start a shell on that
+  process.
+
+  %\begin{lstlisting}[language=bash]
+  {\small
+  \begin{verbatim}
+$ /opt/kathara/bin/lstart --noterminals
+========================= Starting Lab ==========================
+lab_description:    two-hosts
+lab_author:         RB
+=================================================================
+e995fdf1bd0480c407692465ddffdd3c1b06b0fe56a40c0c2424dbb1833536e7
+Applying brctl patch to link e995fdf1bd04
+52dca663fd726d8b43e0464b6414e976844814500e52bef2cc3127847b810e9a
+c6d3d7b08aa2963040600128b99997ee890482c4e112df7715cdff1d5da7836a
+net.ipv4.conf.all.rp_filter = 0
+net.ipv4.conf.default.rp_filter = 0
+net.ipv4.conf.eth0.rp_filter = 0
+net.ipv4.conf.lo.rp_filter = 0
+net.ipv4.conf.all.rp_filter = 0
+net.ipv4.conf.default.rp_filter = 0
+net.ipv4.conf.eth0.rp_filter = 0
+net.ipv4.conf.lo.rp_filter = 0
+$ rbenkocz@poppy: ~sudo docker ps
+[sudo] password for rbenkocz: 
+CONTAINER ID        IMAGE                 COMMAND             CREATED             STATUS              PORTS               NAMES
+c6d3d7b08aa2        kathara/netkit_base   "/bin/bash"         21 seconds ago      Up 18 seconds                           netkit_1000_pc2
+52dca663fd72        kathara/netkit_base   "/bin/bash"         23 seconds ago      Up 20 seconds                           netkit_1000_pc1
+
+$  sudo docker exec -it 52dca663fd72 /bin/bash
+\end{verbatim}
+  }
+
+
+  \item[Running netcat in a \kathara\ virtual machine:] Find out the
+    location of netcat (nc) on the host machine. Then copy the
+    executable file to your home directory. From within a virtual
+    machine, execute netcat by invoking the executable copied to your
+    host machine.
+    \begin{lstlisting}[language=bash]
+      $ type -a nc
+nc is /home/rbenkocz/bin/nc
+nc is /bin/nc
+      cp /bin/nc ~
+    \end{lstlisting}
+
+    On an virtual machine, call nc via folder \verb$/hosthome$.
+    \begin{lstlisting}[language=bash]
+      /hosthome/nc -l 4444  # (on pc1)
+
+      /hosthome/nc 10.0.0.1 4444 (on pc2)
+    \end{lstlisting}
+
+
+  \item[Configure interface \emph{eth0} with an IPv6 address:] ~
+    %\begin{lstlisting}[language=txt]
+    {\small
+    \begin{verbatim}
+Script started on Tue Sep  3 06:13:56 2019
+# ls
+bin   dev  home      hostlab  lib64  mnt  proc  run   srv  tmp         usr
+boot  etc  hosthome  lib      media  opt  root  sbin  sys  typescript  var
+# sysctl -a | grep disable_ipv6
+sysctl: reading key "net.ipv6.conf.all.stable_secret"
+net.ipv6.conf.all.disable_ipv6 = 1
+sysctl: reading key "net.ipv6.conf.default.stable_secret"
+net.ipv6.conf.default.disable_ipv6 = 1
+sysctl: reading key "net.ipv6.conf.eth0.stable_secret"net.ipv6.conf.eth0.disable_ipv6 = 1
+
+sysctl: reading key "net.ipv6.conf.lo.stable_secret"net.ipv6.conf.lo.disable_ipv6 = 1
+
+# sysctl -w net.ipv6.conf.eth0.disable_ipv6=0
+net.ipv6.conf.eth0.disable_ipv6 = 0
+# ifconfig eth0 inet6 add 2100::2/64
+# ping6 2100::1
+PING 2100::1(2100::1) 56 data bytes
+64 bytes from 2100::1: icmp_seq=1 ttl=64 time=0.307 ms
+64 bytes from 2100::1: icmp_seq=2 ttl=64 time=0.140 ms
+64 bytes from 2100::1: icmp_seq=3 ttl=64 time=0.122 ms
+64 bytes from 2100::1: icmp_seq=4 ttl=64 time=0.095 ms
+^C
+--- 2100::1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3059ms
+rtt min/avg/max/mdev = 0.095/0.166/0.307/0.082 ms
+    \end{verbatim}
+    }
+
+    
+  \item[Shutting down a \kathara\ lab gracefully:] From within the
+    directory containing the lab files, execute
+
+    \begin{lstlisting}[language=bash]
+      /opt/kathara/bin/lclean
+    \end{lstlisting}
+
+    
+  \item [Shutting down a \kathara\ lab forced:] Execute
+
+    \begin{lstlisting}[language=bash]
+      /opt/kathara/bin/lwipe
+    \end{lstlisting}
+
+    
+\end{description}
+
+
+\section{Exercises}
+
+\begin{enumerate}[1.]
+\item \kathara\ virtual machines can be configured with IPv4 addresses
+  when creating the lab files in KatharaGUI. In this exercise, you
+  will configure IPv6 addresses to the two virtual hosts, manually,
+  from within each host. Test the connection using \verb$ping6$
+  command. Use netcat to transfer a text file from one host to the
+  other using IPv6 protocols. Use \verb$script$ to capture your
+  command session in a log file.
+
+\item Create a lab with three virtual machines connected to a single
+  LAN. Configure IPv6 addresses to all three machines. Use
+  \verb$ping6$ to test the connectivity between the three hosts. Can
+  you use netcat to relay the data sent from host 1 to host 3 via host
+  2? 
+\end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+\bibliographystyle{plain} \bibliography{labman}
+
+\end{document}
