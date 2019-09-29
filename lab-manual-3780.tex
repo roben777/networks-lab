@@ -40,7 +40,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 1.0}  %   Use current date. 
+\date{\today\\ version 1.01}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -100,15 +100,6 @@
 \section{Lab activities}
 \subsection{Installing and configuring \emph{\kathara}}
 
-The first step needed to carry out most of the activities described in
-this lab manual is to install a network emulator. The emulator is
-software that simulates, using virtualisation technology, several
-computers on a single \emph{host machine}. The software also simulates
-Ethernet local area networks to which several simulated hosts can be
-connected to. Students can open terminal windows with root access on
-the simulated hosts and can use the standard utilities \emph{almost}
-like in a real environment.
-
 This lab manual uses a network emulator called \emph{\kathara},
 available at \url{kathara.org}. The lab activities described here make
 specific use of \kathara\ commands, however, many of these
@@ -124,40 +115,57 @@ even with real networks.
   \cite{law-canada,law-us}. 
 \end{tcolorbox}
 
+\paragraph{Installing \kathara}
+
+Perform this activity ONLY on your home computer. On the school
+computers, \kathara\ is already installed.
+
+The first step needed to carry out most of the activities described in
+this lab manual is to install \kathara. The emulator is
+software that simulates, using virtualisation technology, several
+computers on a single \emph{host machine}. The software also simulates
+Ethernet local area networks to which several simulated hosts can be
+connected to. Students can open terminal windows with root access on
+the simulated hosts and can use the standard utilities \emph{almost}
+like in a real environment.
+
 In this section of the lab, students will install \kathara\ on their
-home computers (optional step) and will configure their school
-account to use \kathara \cite{kathara-wiki}. Please note that the school network has \kathara\ already installed. More information
+home computers, an optional step. More information
 including a few examples of commands are provided in Section
 \ref{examples.lab0}. The following sequence of operations is
 suggested: 
 
 \begin{enumerate}[(1)]
-\item If only configuring an already installed system, go to step
-  \ref{config-step}. You will need root access to the computer you are
+\item If only configuring an already installed system, go to paragraph
+  \ref*{config.se}. You will need root access to the computer you are
   installing \kathara\ on. Please do not execute this step on the
   school network.
 
-Download the installation files for \kathara\ from
+\item Download the installation files for \kathara\ from
   \url{https://github.com/KatharaFramework/Kathara/releases}. 
 Download both the \verb$KatharaGUI$ package for your platform and the
 source code package. The source code package contains additional
 folders, for example the \verb$bin$ folder, needed to run the
-emulator. Unpack both package files into a system folder, such as
+emulator. 
+
+\item Unpack both package files into a system folder, such as
 \verb$/opt/kathara$. 
 
-Follow the installation instructions from
+\item Follow the installation instructions from
 \url{https://github.com/KatharaFramework/Kathara/wiki/Linux} for a
 Linux installation or the appropriate instructions for your platform
 available from the wiki page \cite{kathara-wiki}. 
 
-\item\label{config-step} Define the environment variable
-  \verb$NETKIT_HOME$ to point to the \verb$bin$ folder under \kathara's
-  installation directory (step 6 in the Linux installation
-  instructions). 
 \end{enumerate}
 
+\paragraph{Configuring \kathara:} \label{config.se}
 
-\subsection{Creating a first network}
+Define the environment variable \verb$NETKIT_HOME$ to point to the
+\verb$bin/$ folder under \kathara's installation directory (step 6 in
+the Linux installation instructions).
+
+
+\subsection{Creating a first network}\label{2nodes.se}
 
 To test \kathara\ and to begin the second part of this lab, we must
 define the network to be simulated. This definition resides in a
@@ -240,7 +248,7 @@ experiment with our first network.
   \item Depending on the options passed when you started the lab, you
     should have access to two shell windows with user root, one on pc1
     and the other on pc2. Run \verb$ifconfig$ to check the IP address
-    information on both hosts. Run \verb$pping$ to check for
+    information on both hosts. Run \verb$ping$ to check for
     connectivity between the two hosts. See Section
     \ref{examples.lab0}.
 
@@ -251,7 +259,7 @@ experiment with our first network.
     about how to execute netcat.
 
     Run netcat in listening mode on one of the hosts. From the other
-    host,  connect netcat to the instance you left listening.
+    host, connect netcat to the instance you left listening.
 
   \item Use netcat to transfer a text file from one host to the
     other. 
@@ -267,17 +275,26 @@ Replace the path to the bin folder in this example with your actual
 path. You can insert this line in your \verb$.bash_rc$ file so that it
 is executed every time you open a new terminal.
 \begin{lstlisting}[language=bash]
-  export NETKIT_HOME=/opt/kathara/bin
+  export NETKIT_HOME=/opt/kathara/bin/
 \end{lstlisting}
 
 \item[Start a \kathara\ lab using gnome-terminal as terminal instead
-  of xterm:]
+  of xterm:] You should consider using this command only if you do not
+  like the terminal opened by default for every virtual host by
+  \kathara. 
   Change current directory to the directory with the lab files. Then,
 \begin{lstlisting}[language=bash]
   /opt/kathara/bin/lstart --xterm=gnome-terminal
 \end{lstlisting}
 
-\item[Stop a running \kathara\ lab:] Change current directory to the
+\item[Stop a running \kathara\ lab:] This command is useful also when
+  you cannot start a lab because \kathara\ reports that existing
+  virtual hosts were detected and \kathara\ attempts to link terminals
+  to these hosts. Most likely \kathara\ fails reusing those virtual
+  hosts. Cleaning any trace of previous \kathara\ sessions will solve
+  the problem.
+
+  Change current directory to the
   directory with the lab files. Then, 
 \begin{lstlisting}[language=bash]
   /opt/kathara/bin/lclean
@@ -286,12 +303,11 @@ is executed every time you open a new terminal.
 \item[Start a \kathara\ lab without opening terminals for each virtual
   machine:] This operation requires root privileges on the host
   machine (the computer running the simulation), thus you can only run
-  this on your personal computer.
+  this on your personal computer. You might like this operation in
+  case you only want to open terminals on specific virtual hosts, not
+  on every host as is the default behaviour. 
 
-  When the number of virtual machines is large, having a terminal
-  window open for each machine is annoying, In addition, you most
-  likely need to work from within only a handful of virtual
-  machines. Start the lab using the \verb$--noterminals$ option. Then
+  Start the lab using the \verb$--noterminals$ option. Then
   use Linux container management commands (the virtualisation
   technique that \kathara\ is built on) to find out the process ID of
   the simulated host you want to interact with. Start a shell on that
@@ -328,11 +344,18 @@ $  sudo docker exec -it 52dca663fd72 /bin/bash
   }
 
 
+  \item[Access your home directory from within host machines:] You can
+    save files created from within the virtual hosts by writing them
+    to \verb$/hosthome/$. Similarly, you can read any file from your
+    home directory within each of the virtual hosts by reading the
+    files from folder \verb$/hosthome/$.
+
   \item[Running netcat in a \kathara\ virtual machine:] Find out the
     location of netcat (nc) on the host machine. Then copy the
     executable file to your home directory. From within a virtual
     machine, execute netcat by invoking the executable copied to your
     host machine.
+ 
     \begin{lstlisting}[language=bash]
       $ type -a nc
 nc is /home/rbenkocz/bin/nc
@@ -415,8 +438,45 @@ rtt min/avg/max/mdev = 0.095/0.166/0.307/0.082 ms
   LAN. Configure IPv6 addresses to all three machines. Use
   \verb$ping6$ to test the connectivity between the three hosts. Can
   you use netcat to relay the data sent from host 1 to host 3 via host
-  2? 
+  2?
 \end{enumerate}
+
+
+%%%%%%%%%%%%%%%%$
+
+\chapter{Lab 1: Capturing and examining packets }\label{tcpdump.se}
+
+\section{Objectives}
+
+\begin{itemize}[--]
+\item Students will use the \emph{tcpdump} program to capture network
+  packets. 
+\item Students will examine captured packets with
+  \emph{Wireshark} on their personal computers, or with an online
+  network packet visualization tool such as
+  \url{https://hpd.gasmi.net/}. 
+\item Students will identify the protocols
+  that participated in the creation of a captured packet. 
+\item Students will examine the structure of packets resulting from a
+  simple file transfer using netcat. 
+\item Students will explore the 
+  Address Resolution Protocol by examining the exchange of relevant
+  packets. 
+
+\end{itemize}
+
+
+\section{Lab activities}
+
+\subsection{Tcpdump on a simple local network}
+
+\begin{itemize}[--]
+\item Start the lab corresponding to the simple local network you
+  created in Section \ref{2nodes.se}. 
+\item Execute \verb$tcpdump$ to capture any packets arriving on the
+  network interface of host pc1. 
+\end{itemize}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
