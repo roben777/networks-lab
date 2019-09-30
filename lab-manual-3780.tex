@@ -72,7 +72,7 @@
 
 \mainmatter % arabic page nrs
 
-\chapter{Lab 0: An Introduction to the Tools }
+\chapter{Lab 0: An Introduction to the Tools }\label{intro.se}
 
 \section{Objectives}
 
@@ -426,7 +426,8 @@ rtt min/avg/max/mdev = 0.095/0.166/0.307/0.082 ms
 \section{Exercises}
 
 \begin{enumerate}[1.]
-\item \kathara\ virtual machines can be configured with IPv4 addresses
+\item\label{ipv6.ex} \kathara\ virtual machines can be configured with
+  IPv4 addresses 
   when creating the lab files in KatharaGUI. In this exercise, you
   will configure IPv6 addresses to the two virtual hosts, manually,
   from within each host. Test the connection using \verb$ping6$
@@ -449,6 +450,8 @@ rtt min/avg/max/mdev = 0.095/0.166/0.307/0.082 ms
 \section{Objectives}
 
 \begin{itemize}[--]
+  \item Students will generate lab files configured with IPv6
+    addresses. 
 \item Students will use the \emph{tcpdump} program to capture network
   packets. 
 \item Students will examine captured packets with
@@ -456,11 +459,11 @@ rtt min/avg/max/mdev = 0.095/0.166/0.307/0.082 ms
   network packet visualization tool such as
   \url{https://hpd.gasmi.net/}. 
 \item Students will identify the protocols
-  that participated in the creation of a captured packet. 
+  present in the captured packets. 
 \item Students will examine the structure of packets resulting from a
   simple file transfer using netcat. 
 \item Students will explore the 
-  Address Resolution Protocol by examining the exchange of relevant
+  IPv4 Address Resolution Protocol by examining the exchange of relevant
   packets. 
 
 \end{itemize}
@@ -468,16 +471,58 @@ rtt min/avg/max/mdev = 0.095/0.166/0.307/0.082 ms
 
 \section{Lab activities}
 
+\subsection{Generate lab files with IPv6 addresses for
+  hosts}\label{2nodes-ipv6.se} 
+
+The KatharaGUI application demonstrated in Chapter \ref{intro.se}
+provides dedicated entries to assign IPV4 addresses to the virtual
+hosts in the network. We will add appropriate commands to the lab
+configuration page in KatharaGUI so that the virtual network is
+automatically configured with IPv6 addresses as well.
+
+\begin{itemize}[--]
+\item Start KatharaGUI, and load the config file you created in
+  Chapter \ref{intro.se}. You should see the configuration for a local
+  network with two nodes, with IPv4 addresses allocated to the two
+  nodes.
+  \item Locate the ``Network interfaces'' tab for each of the two
+    machines in the lab. This tab contains an edit box titled
+    ``Directly in pc1(pc2).startup''. The text you enter in these edit
+    boxes is inserted in the startup script being executed, on each
+    of the virtual machines, when they are started. Add the two
+    commands you used to configure IPv6 addresses manually for
+    Exercise \ref{ipv6.ex} on page \pageref*{ipv6.ex}.
+  \item Save the altered configuration file under a different
+    \emph{lab~.config} file. Download the lab files and unpack them in
+    your working folder in your home directory.
+  \item Start the lab using command \verb$lstart$.
+  \item Test your configuration by checking that the IPv6 addresses
+    have been assigned to the network interfaces for each of the
+    virtual machines (command \verb$ifconfig$) and test the connection
+    using IPv6 protocols (command \verb$ping6$).
+\end{itemize}
+
 \subsection{Tcpdump on a simple local network}
 
 \begin{itemize}[--]
-\item Start the lab corresponding to the simple local network you
-  created in Section \ref{2nodes.se}. 
-\item Execute \verb$tcpdump$ to capture any packets arriving on the
+\item Start the lab corresponding to the simple local network with
+  IPv6 addresses you
+  created in Section \ref{2nodes-ipv6.se}, if the lab is not already running. 
+\item Execute command \verb$tcpdump$ to capture any packets arriving on the
   network interface of host pc1. 
 \end{itemize}
 
 
+%%%%%
+\subsection{Examples and other resources}\label{examples.lab1}
+
+
+
+\section{Exercises}
+
+\begin{enumerate}[1.]
+\item
+\end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 \bibliographystyle{plain} \bibliography{labman}
