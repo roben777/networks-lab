@@ -187,9 +187,9 @@ The following fields should be filled:
 \item[Machine informations:] Fill a name for the first machine
   (host). It is a good idea to provide unique names to the hosts you
   create. Choose \emph{terminal} as the type for the virtual
-  machine, which generates the simplest startup scripts for your
+  machine, which generates the simplest start-up scripts for your
   virtual machine. The other types allow additional configuration
-  scripts to be loaded by your virtual machine at startup. Press the
+  scripts to be loaded by your virtual machine at start-up. Press the
   \emph{Add machine} button to add more virtual machines to the lab. 
 \item[Network interfaces:] Every virtual machine you define should
   have at least one network interface. A default interface,
@@ -460,11 +460,10 @@ rtt min/avg/max/mdev = 0.095/0.166/0.307/0.082 ms
   \url{https://hpd.gasmi.net/}. 
 \item Students will identify the protocols
   present in the captured packets. 
-\item Students will examine the structure of packets resulting from a
-  simple file transfer using netcat. 
-\item Students will explore the 
-  IPv4 Address Resolution Protocol by examining the exchange of relevant
-  packets. 
+\item Students will examine the structure of packets. 
+\item Students will explore the IPv4 Address Resolution Protocol and
+  the corresponding protocol for IPv6 by examining the exchange of
+  relevant packets.
 
 \end{itemize}
 
@@ -554,7 +553,7 @@ automatically configured with IPv6 addresses as well.
 
   Useful options:
   \begin{description}
-    \item [-t] Supress printing time stamps (not relevant for our
+    \item [-t] Suppress printing time stamps (not relevant for our
       simulated environment).
     \item [-s] Size of captured packets. 0=full packet captured.
     \item [-i interface] Which interface to capture from.
@@ -572,12 +571,25 @@ tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 byt
 \end{verbatim}
   }
   
+%%%
+\item[Delete an entry corresponding to an address from the ARP
+  table:]~
+
+\begin{lstlisting}[language=bash]
+      arp -d address
+\end{lstlisting}
+
+%%
+\item[Manipulating the neighbours table in IPv6:]~
+
+See \url{https://www.linuxtopia.org/online_books/network_administration_guides/Linux+IPv6-HOWTO/Linux_IPv6_HowTo_x1187.html}
+
 \end{description}
 
 \section{Exercises}
 
 \begin{enumerate}[1.]
-\item Start the lab you configured in Section
+\item\label{arp.ex} Start the lab you configured in Section
   \ref*{2nodes-ipv6.se}. Start packet capture on one of the hosts. On
   the other host, run command \verb$arp$. If it provides any output,
   delete the IPv4 association from its table (see Section
@@ -585,7 +597,68 @@ tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 byt
   host. Execute \verb$arp$ again. On the other host, stop the packet
   capture process. 
 
-  Write an answer to the following questions. 
+  Answer the following questions. 
+  \begin{compactenum}[(a)]
+    \item What is the purpose of the ARP protocol?
+
+    \item Examine the pcap file. Which hosts have placed an ARP
+      request? List the packets containing the ARP request as decoded
+      by your network packet examination utility.
+
+    \item Examine the pcap file. Which hosts answer each ARP request?
+      How is the ARP request delivered and what
+      address is used?
+
+    \item List the packets containing the ARP response to the
+      requests. Identify the source Ethernet address and the source IP
+      address from one of the ARP reply packets. At what offset from
+      the start of the packet are these addresses stored? What is the
+      \emph{byte order} (\cite{dordal2019introduction} Section 11.1.5)
+      by which Ethernet and IP addresses are stored in
+      these packets?
+  \end{compactenum}
+
+%%%
+\item This exercise is equivalent to Exercise \ref*{arp.ex} but for
+  IPv6. Start the lab you configured in Section
+  \ref*{2nodes-ipv6.se}. 
+\begin{compactitem}[-]
+  \item Run \verb$ifconfig$ and note the output on
+  one of the hosts, then start packet capture on the same host. 
+\item On the other host, run command \verb$ip -6 neigh show$
+  \cite{arpipv6} and note
+  the output. 
+\item \verb$ping6$ the other host using the global address
+  \verb$2100::x$.
+\item Run the \verb$ip$ command once more and note the output.
+\item Now \verb$ping6$ the other host using the \textbf{link local}
+  IPv6 address you discovered from the output of \verb$ifconfig$.
+\item Run the \verb$ip$ command and note the output.
+\end{compactitem}
+
+Answer the following questions.
+  \begin{compactenum}[(a)]
+    \item What is the protocol $X$ equivalent to ARP in the IPv6 protocol
+      suite? 
+
+    \item What is happening when you execute the sequence of
+      commands from this exercise?
+
+    \item Examine the pcap file. Which hosts have placed a protocol
+      $X$ request? List the packets containing the $X$ request as
+      decoded by your network packet examination utility. Is a request
+      present for the link local IPV6 address too?
+
+    \item Examine the pcap file. Which hosts answer each $X$ request?
+      How is the request delivered and what
+      address is used?
+
+    \item List the packets containing the response to the protocol $X$
+      requests. Identify the source Ethernet address and the source IP
+      address from one of the protocol $X$ reply packets. At what offset from
+      the start of the packet are these addresses stored? 
+  \end{compactenum}
+
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
