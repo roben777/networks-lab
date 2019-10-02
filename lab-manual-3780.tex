@@ -508,23 +508,84 @@ automatically configured with IPv6 addresses as well.
 \item Start the lab corresponding to the simple local network with
   IPv6 addresses you
   created in Section \ref{2nodes-ipv6.se}, if the lab is not already running. 
-\item Execute command \verb$tcpdump$ to capture all packets arriving on the
-  network interface \verb$eth0$ of host pc1. See Section \ref{examples.lab1} for
-  an example that captures all packets and writes them to a file to be
-  analysed later. You 
-\item 
+\item Execute command \verb$tcpdump$ to capture all packets arriving
+  on the network interface \verb$eth0$ of host pc1. See Section
+  \ref{examples.lab1} for an example that captures all packets and
+  writes them to a file to be analysed later. You can also consult
+  several of the many online resources on \verb$tcpdump$
+  \cite{tcpdump,tcpdump2}. Make sure your packet capture file (pcap
+  file) resides somewhere in your home directory and not on the
+  virtual machine.
+\item On the other host, run command \verb$ping$ to test the
+  connectivity to the machine from where you capture
+  packets. Interrupt \verb$ping$ and \verb$tcpdump$ with CTRL-C.
+\item If you are running the simulation \textbf{on your own computer}, install
+  \emph{Wireshark} (\url{https://www.wireshark.org/}). 
+\item \textbf{If you are working on your own computer}, open the saved
+  packet capture file in \emph{Wireshark}. On the \textbf{school
+    computers}, upload your pcap file to
+  \url{https://hpd.gasmi.net}. Wireshark and gasmi.net are utilities
+  used in the examination of the structure of packets.
+\item Wireshark and gasmi.net decompose each captured packet into
+  several structures (or headers). Each header is created by a
+  different network component from the \emph{protocol
+    stack}\footnote{A protocol stack is a close approximation of the
+    layered organization of the network software components. At the
+    bottom of the protocol stack sit components providing link-layer
+    type services, such as Ethernet. At the top of the stack are
+    components providing application layer type services.} of the
+  machine. 
+
+  Which headers are common to all of the captured packets?
+
+  Find three different types of network packets from your captured
+  file containing a different combination of network headers. For each
+  of the types, enumerate the headers present in the packets. Which
+  headers originate from protocols at the \emph{top} of the protocol
+  stack?  
 \end{itemize}
 
 
 %%%%%
 \subsection{Examples and other resources}\label{examples.lab1}
 
+\begin{description}
+\item[Capture all packets and write them to a packet capture file:] ~
 
+  Useful options:
+  \begin{description}
+    \item [-t] Supress printing time stamps (not relevant for our
+      simulated environment).
+    \item [-s] Size of captured packets. 0=full packet captured.
+    \item [-i interface] Which interface to capture from.
+    \item [-w file] Write packets to file, to be examined by 3rd party
+      tools like wireshark.
+  \end{description}
+  
+  {\small
+\begin{verbatim}
+  root@pc1:/# tcpdump -i eth0 -s0 -t -w /hosthome/somelocation/somefile.pcap
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+^C11 packets captured
+11 packets received by filter
+0 packets dropped by kernel
+\end{verbatim}
+  }
+  
+\end{description}
 
 \section{Exercises}
 
 \begin{enumerate}[1.]
-\item
+\item Start the lab you configured in Section
+  \ref*{2nodes-ipv6.se}. Start packet capture on one of the hosts. On
+  the other host, run command \verb$arp$. If it provides any output,
+  delete the IPv4 association from its table (see Section
+  \ref*{examples.lab1}). Run command \verb$ping$ to reach the other
+  host. Execute \verb$arp$ again. On the other host, stop the packet
+  capture process. 
+
+  Write an answer to the following questions. 
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
