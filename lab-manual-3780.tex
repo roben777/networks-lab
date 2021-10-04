@@ -16,6 +16,7 @@
 \usepackage[hyperfootnotes=false]{hyperref}
 %\floatstyle{boxed} 
 \restylefloat{figure}
+\usepackage{tabularx}
 
 \lstset{
   framexleftmargin=10mm, 
@@ -40,7 +41,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 1.01}  %   Use current date. 
+\date{\today\\ version 2.0}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -72,42 +73,16 @@
 
 \mainmatter % arabic page nrs
 
-\chapter{Lab 0: An Introduction to the Tools }\label{intro.se}
+\chapter{Preparing to run the labs at home}\label{intro.se}
 
-\section{Objectives}
+The laboratory experiences in this document use a network emulator called \kathara available at \url{kathara.org}. \kathara is installed in CS labs at the univesity. You may choose to install \kathara\ on your own computer and you can complete the exercises at home, if you wish. \kathara\ is cross platform, although you need a Pro version for the Windows operating system since \kathara\ uses \emph{Docker} (\url{https://www.docker.com/}).
 
-\begin{itemize}[--]
-\item Using the network emulator available freely at
-  \url{kathara.org}, students will define a simple local network with
-  two hosts and
-  will use the netcat utility to transfer data between the hosts.
+\section{Installing and configuring \emph{\kathara} at home}
 
-\item If the network is properly defined, the emulator will correctly
-  configure IPv4 addresses for the two hosts. Using standard commands
-  available for hosts running Unix based operating systems, the
-  students will configure IPv6 addresses and will test the
-  connectivity using the IPv6 network protocols.
-
-%% \item Students will use the \emph{tcpdump} program to capture network
-%%   packets. Students will examine captured packets with
-%%   \emph{Wireshark} on their personal computers, or with an online
-%%   network packet visualization tool such as
-%%   \url{https://hpd.gasmi.net/}. Students will identify the protocols
-%%   that participated in the creation of the captured packets. 
-\end{itemize}
-
-
-\section{Lab activities}
-\subsection{Installing and configuring \emph{\kathara}}
-
-This lab manual uses a network emulator called \emph{\kathara},
-available at \url{kathara.org}. The lab activities described here make
-specific use of \kathara\ commands, however, many of these
-activities can be adjusted to work with any other network emulator or
-even with real networks. 
+This section applies only if you wish to install \kathara\ at home. In the CS laboratoory at the university, \kathara\ is already installed.
 
 \begin{tcolorbox}[title=Lab safety note]
-  Students are cautioned to exercise common sense when attempting any
+  Please exercise common sense when attempting any
   of the commands described in this manual on real computer
   networks. Please consult the UofL policies concerning the use of the
   data network \cite{its-policies} and also be aware of the federal
@@ -117,29 +92,10 @@ even with real networks.
 
 \paragraph{Installing \kathara}
 
-Perform this activity ONLY on your home computer. On the school
-computers, \kathara\ is already installed.
-
-The first step needed to carry out most of the activities described in
-this lab manual is to install \kathara. The emulator is
-software that simulates, using virtualisation technology, several
-computers on a single \emph{host machine}. The software also simulates
-Ethernet local area networks to which several simulated hosts can be
-connected to. Students can open terminal windows with root access on
-the simulated hosts and can use the standard utilities \emph{almost}
-like in a real environment.
-
-In this section of the lab, students will install \kathara\ on their
-home computers, an optional step. More information
-including a few examples of commands are provided in Section
-\ref{examples.lab0}. The following sequence of operations is
-suggested: 
-
 \begin{enumerate}[(1)]
-\item If only configuring an already installed system, go to paragraph
-  \ref*{config.se}. You will need root access to the computer you are
-  installing \kathara\ on. Please do not execute this step on the
-  school network.
+\item You will need root access or admin privileges on
+  the computer you are installing \kathara\ on. Please do not execute
+  this step on the school network.
 
 \item Download the installation files for \kathara\ from
   \url{https://github.com/KatharaFramework/Kathara/releases}. 
@@ -158,11 +114,226 @@ available from the wiki page \cite{kathara-wiki}.
 
 \end{enumerate}
 
-\paragraph{Configuring \kathara:} \label{config.se}
 
-Define the environment variable \verb$NETKIT_HOME$ to point to the
-\verb$bin/$ folder under \kathara's installation directory (step 6 in
-the Linux installation instructions).
+%%%%%%%%%%%%%%%%%%%%%%%%%%55
+
+
+\chapter{Lab 1: an introduction to the tools}
+
+\section{Objectives}
+
+In this lab, students will learn some basic commands and configuration options to get them started with \kathara. No networks are simulated yet. Some basic familiarity with linux shell commands is assumed. Students without experience with shell commands will learn during this lab.
+
+\begin{itemize}[--]
+  \item Students will configure their \kathara\ setup on their course account in the CS lab. 
+  \item Students will start a single device (docker container) with \kathara\ and will execute unix commands including \emph{ifconfig} and \emph{ping}. This will ensure their \kathara\ environment is correctly setup.
+  \item Students will adjust the configuration of their \kathara\ system by changing configuration files.
+  \item Students will create files on their devices that can be visible on their host machine, and vice-versa.
+  \item Students will start and stop the execution of devices using different docker images for \kathara.
+    \item Students will run \emph{netcat} on their device running the \emph{kathara/base} docker image.
+\end{itemize}
+
+
+\subsection{Summary of commands}
+
+\begin{tabularx}{\textwidth}{r  X}
+  Commands & Description \\ \midrule
+  ifconfig & lists and configures network interfaces \\
+  ping & tests network connectivity to a remote or to the same computer \\
+  nc (netcat) & network cat: transfers data through the network to a remote computer \\ \midrule
+
+  ls & lists the contents of the current directory \\
+  cd & changes the current directory \\
+  cat & conCATenates the content of the files passed as arguments or takes input from the terminal if no arguments are given \\
+  export & exports an environment variable so that it is defined for the current terminal session \\
+  whoami & prints the account name for the terminal session\\
+  vim, nano & start text editors on devices \\ \midrule
+  vstart & starts a \kathara\ virtual device; \emph{-n name} is mandatory \\
+  vclean & stops a virtual device;  \emph{-n name} is mandatory \\
+  vlist & lists all running virtual devices \\
+\end{tabularx}
+
+
+
+\section{Lab activities}
+
+\begin{enumerate}[{Activity }1)]
+%%   \item To be able to start a device (virtual machine) successfully, as a first step, we need to define an environment variable that points to the install location for the \kathara\ scripts (step 6 in
+%% the Linux installation instructions). In your school network, the kathara environment seems to be properly configured; executing this step may not be necessary. 
+    
+%% \begin{verbatim}
+%% host$ export NETKIT_HOME=/opt/kathara/bin/
+%% \end{verbatim}
+
+  %%
+\item Follow the instructions contained in the document ``Start \kathara\ at school'' under the Laboratory section on Moodle.
+  
+\item Start your first virtual device (docker container). Give your device a name. The name will appear in the title bar of the terminal opened for that device. In the example below, the name of the device is ``pc''.
+
+  \begin{verbatim}
+host$ kathara vstart -n pc
+====================== Starting Device ======================
+Deploying devices... |##################################################################| 1/1
+\end{verbatim}
+
+\item Your device has started successfully when a new terminal window opens. This terminal window allows to run commands on the virtual device. Try to navigate through the file system for your device. What is the user name for the terminal on the virtual device? Can you see the same set of files in the device window as in a regular terminal window opened on the host machine?
+
+\begin{verbatim}
+root@pc:/# ls
+bin   dev  home      lib    media  opt   root  sbin    srv  tmp  var
+boot  etc  hosthome  lib64  mnt    proc  run   shared  sys  usr
+root@pc:/# cd 
+root@pc:~# ls
+root@pc:~# pwd
+/root
+root@pc:~# whoami
+root
+root@pc:~# 
+\end{verbatim}
+
+\item A network interface is an operating system gadget that allows users interact and configure the behaviour of the OS portion of the OS that deals with the network. To see your network interfaces, run \emph{ifconfig}. What do you notice if you run ifconfig on the virtual device versus when you run it on the host computer?
+
+\begin{verbatim}
+root@pc:~# ifconfig
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+\end{verbatim}
+
+\item The only network interface available to your virtual device started as illustrated in this lab is \emph{lo}. Find out what this network interface is about.
+
+\item \emph{ping} is a program that sends a sequence of control packets to the address specified as an argument. It is a standard tool to verify the connectivity between the computer on which ping is executed and the remote computer specified as an argument. The loopback network interface is always available on a device and allows connectivity with the device itself. The name \emph{localhost} identifies the device itself as an address (name actually). We can test the connectivity with the device itself.
+
+\begin{verbatim}
+root@pc:/# ping localhost
+PING localhost(localhost (::1)) 56 data bytes
+64 bytes from localhost (::1): icmp_seq=1 ttl=64 time=0.019 ms
+64 bytes from localhost (::1): icmp_seq=2 ttl=64 time=0.060 ms
+64 bytes from localhost (::1): icmp_seq=3 ttl=64 time=0.067 ms
+^C
+--- localhost ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2028ms
+rtt min/avg/max/mdev = 0.019/0.048/0.067/0.022 ms
+root@pc:/# 
+\end{verbatim}
+
+\item What inet (IPv4) address is asssociated with the local host? How about the inet6 (IPv6) address for the local host? Hint: examine the output of the \emph{ifconfig} command. Run \emph{ping} with these addresses instead of the \emph{localhost} name.
+
+  Note that IPv6 is not initially enabled on the virtual devices. To enable IPv6, you will need to edit kathara's configuration file on the host machine. This step is described shortly. Come back to this step after you enable IPv6 and start a new virtual machine.
+
+\item You can shut down a virtual device you created with command \emph{vstart} by running command \emph{vclean}. Shutdown the device you started at the beginning of the lab.
+
+\begin{verbatim}
+$ kathara vstart -n pc1
+====================== Starting Device ======================
+Deploying devices... |##############################################################################| 1/1
+$ kathara vclean -n pc1
+Deleting devices... |###############################################################################| 1/1
+INFO - Device `pc1` deleted successfully!
+\end{verbatim}
+
+\item The \emph{vstart} command has other options besides the mandatory argument \emph{-n}. Check \url{https://www.kathara.org/man-pages/kathara-vstart.1.html} for the man pages. In this activity, you will experiment with a few options for \emph{vstart}. In particular, we will look at the \emph{--image} option. The virtual device you startes is actually a \emph{docker container} \cite{docker-useful}. A docker container is built from an \emph{image} which contains all the software needed for the docker application. When starting a virtual device, the default image used for your device is \emph{kathara/quagga}. This image contains packet routing software, \url{https://quagga.net/}. Some useful network tools, such as \emph{netcat} \cite{netcat}, are not available in the default image.
+
+  Start a virtual device using the \emph{kathara/base} image. Note that the output might differ from the one illustrated below. The new image must be fetched from \url{https:\\hub.docker.com}, which happens automatically when you start the virtual machine.
+
+\begin{verbatim}
+host$ kathara vstart -i kathara/base -n pc2
+====================== Starting Device ======================
+Deploying devices... |#######################################################################################| 1/1
+\end{verbatim}
+
+\item Go to \url{https://hub.docker.com} and search for images that contain the keywork \emph{kathara}. Start another virtual device using a different image from \emph{quagga} and \emph{base}. Then list your running devices with \emph{kathara list}.
+
+  Note: in the CS lab, the \emph{list} command cannot be carried out because of permissions. You are encouraged to install \kathara\ on your own computer and experiment with the list command as well as docker command.
+
+\begin{verbatim}
+$ kathara list
+TIMESTAMP: 2021-09-04 17:02:43.932187
+
+
+ LAB HASH                USER      DEVICE NAME  STATUS   CPU %  MEM USAGE / LIMIT   MEM %  NET I/O   
+
+ BquVk2860DTFrej8slHuVg  rbenkocz  pc2          running  0.00%  1.85 MB / 15.31 GB  0.01%  0 B / 0 B 
+
+ BquVk2860DTFrej8slHuVg  rbenkocz  pc3          running  0.00%  1.84 MB / 15.31 GB  0.01%  0 B / 0 B 
+
+ BquVk2860DTFrej8slHuVg  rbenkocz  pc           running  0.00%  3.76 MB / 15.31 GB  0.02%  0 B / 0 B 
+
+\end{verbatim}
+
+\item For many of the future laboratories, we would like to use the \emph{kathara/base} image. We can change the default behaviour of kathara by editing its configuration file. Open the \emph{./config/kathara.conf} file on the host machine and change the default image. \textbf{While we are here, also change the hosthome\_mount option to true and enable ipv6.}
+\begin{verbatim}
+{
+ "image": "kathara/base",
+ "manager_type": "docker",
+ "terminal": "/usr/bin/xterm",
+ "open_terminals": true,
+ "device_shell": "/bin/bash",
+ "net_prefix": "kathara",
+ "device_prefix": "kathara",
+ "debug_level": "INFO",
+ "print_startup_log": true,
+ "enable_ipv6": true,
+ "last_checked": 1630600319.5141602,
+ "hosthome_mount": true,
+ "shared_mount": true
+}
+\end{verbatim}
+
+\item One important feature of the network emulator is the ability of transfering information (for example network capture files) between the virtual devices and the host computer. On any virtual device, if the \kathara\ configuration option \verb$hosthome_mount$ is enabled, the host computer home directory is accessible to the virtual device via the directory \verb$/hosthome$ on the virtual device.
+
+  \begin{itemize}[--]
+  \item Create a working folder in your home directory \textbf{on the host computer} named \emph{work1}.
+  \item Make sure the \kathara\ configuration option \emph{hosthome\_mount} is enabled.
+  \item Make sure you have a virtual device started \emph{after} the hosthome mount option is enabled.
+  \item In the terminal window of the virtual device, navigate to the directory you just created. Use the text editor \emph{nano} to create a text file with some line of text, such as ``Hello world.''.
+  \item In the terminal window on the host machine, navigate to the \emph{work1} directory. List it with \emph{ls}. Does the file you created from the virtual device exist and is it accessible on the host machine? Which user owns the file? Can you remove it from the host machine? (If not, you can remove it from the virtual device)
+  \end{itemize}
+
+\item
+
+\end{enumerate}
+
+\section{Exercises}
+
+\begin{enumerate}[1.]
+\item Start a virtual device named ``mypc'' using the \emph{kathara/base} image. Shut down the virtual device ``mypc''.
+\item List the virtual devices started on your host machine.
+\item Start a virtual device. On the virtual device, run command \emph{ifconfig} and redirect its contents to a file in the work directory on your host machine. List the contents of the file from the host machine.
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%
+
+\chapter{Lab 2: creating networked devices}
+
+
+
+\begin{itemize}[--]
+\item Students will define a simple local network with
+  two hosts and
+  will use the ping utility to test the connection between the hosts.
+
+\item If the network is properly defined, the emulator will correctly
+  configure IPv4 addresses for the two hosts. Using standard commands
+  available for hosts running Unix based operating systems, the
+  students will configure IPv6 addresses and will test the
+  connectivity using the IPv6 network protocols.
+
+%% \item Students will use the \emph{tcpdump} program to capture network
+%%   packets. Students will examine captured packets with
+%%   \emph{Wireshark} on their personal computers, or with an online
+%%   network packet visualization tool such as
+%%   \url{https://hpd.gasmi.net/}. Students will identify the protocols
+%%   that participated in the creation of the captured packets. 
+\end{itemize}
+
+
+\section{Lab activities}
 
 
 \subsection{Creating a first network}\label{2nodes.se}
