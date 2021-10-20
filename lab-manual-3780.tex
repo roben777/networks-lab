@@ -29,6 +29,22 @@
   basicstyle=\scriptsize\ttfamily,
 }
 
+
+%%%% insert figures %%%%
+% Args: 1=page in pdf file with figure (1, 2, etc)
+% 2=scale factor (1: no scale, 0.5: reduced to 50%, 2:double, etc)
+% 3=caption
+% NOTE: defines label f-page_nr for each figure
+\newcommand{\inspdf}[3]{
+\begin{figure}[tb]
+\begin{center}
+\includegraphics[page=#1, scale=#2]{figs-manual/figs.pdf}
+\end{center}
+        \caption{#3}\label{f-#1}
+\end{figure}
+}
+\pdfpagebox5
+
 \usepackage{tcolorbox}
 \usepackage{xcolor}
 
@@ -162,7 +178,7 @@ In this lab, students will learn some basic commands and configuration options t
 
 \section{Lab activities}
 
-\paragraph{Target: \ref{vstart}}
+\subsection{Target: \ref{vstart}}
 
 \begin{enumerate}[label=Activity \arabic*:]
 %%   \item To be able to start a device (virtual machine) successfully, as a first step, we need to define an environment variable that points to the install location for the \kathara\ scripts (step 6 in
@@ -247,7 +263,7 @@ INFO - Device `pc1` deleted successfully!
 \end{enumerate}
 
 %%%%%%%%%%
-\paragraph{Target: \ref{image}}
+\subsection{Target: \ref{image}}
 
 \begin{enumerate}[resume*]
 \item The \emph{vstart} command has other options besides the mandatory argument \emph{-n}. Check \url{https://www.kathara.org/man-pages/kathara-vstart.1.html} for the man pages. In this activity, you will experiment with a few options for \emph{vstart}. In particular, we will look at the \emph{--image} option. The virtual device you started is actually a \emph{docker container} \cite{docker-useful}. A docker container is built from an \emph{image} which contains all the software needed for the docker application. When starting a virtual device, the default image used for your device is \emph{kathara/quagga}. This image contains packet routing software, \url{https://quagga.net/}. Some useful network tools, such as \emph{netcat} \cite{netcat}, are not available in the default image.
@@ -283,7 +299,7 @@ TIMESTAMP: 2021-09-04 17:02:43.932187
 %$
 \end{enumerate}
 
-\paragraph{Target: \ref{config}}
+\subsection{Target: \ref{config}}
 
 \begin{enumerate}[resume*]
 \item For many of the future laboratories, we would like to use the \emph{kathara/base} image. We can change the default behaviour of kathara by editing its configuration file. Open the \emph{./config/kathara.conf} file on the host machine and change the default image. \textbf{While we are here, also change the hosthome\_mount option to true and enable ipv6.}
@@ -306,7 +322,7 @@ TIMESTAMP: 2021-09-04 17:02:43.932187
 \end{lstlisting}
 \end{enumerate}
 
-\paragraph{Target: \ref{hosthome}}
+\subsection{Target: \ref{hosthome}}
 
 \begin{enumerate}[resume*]
 \item One important feature of the network emulator is the ability of transfering information (for example network capture files) between the virtual devices and the host computer. On any virtual device, if the \kathara\ configuration option \verb$hosthome_mount$ is enabled, the host computer home directory is accessible to the virtual device via the directory \verb$/hosthome$ on the virtual device.
@@ -321,7 +337,7 @@ TIMESTAMP: 2021-09-04 17:02:43.932187
 
 \end{enumerate}
 
-\paragraph{Target: \ref{bridged}}
+\subsection{Target: \ref{bridged}}
 
 \begin{enumerate}[resume*]
 \item The virtual devices we started so far have only one network interface enabled, the loopback interface. It is possible to instruct \kathara\ to ``connect'' the virtual device to the host computer via a second network interface on the virtual device. This is achieved with command line option \emph{--bridged} with the \emph{vstart} command.
@@ -344,7 +360,7 @@ $
 Test with \emph{ping} both addresses FROM the virtual device. 
 \end{enumerate}
 
-\paragraph{Cleanup}
+\subsection{Cleanup}
 
 \begin{enumerate}[resume*]
 \item Shutdown all the virtual devices you created during the lab. Use \emph{kathara wipe}.
@@ -384,18 +400,22 @@ Check the manual page for command \emph{factor}. Run command \emph{factor} on an
 
 \chapter{Lab 2: creating networked devices}
 
+\section{Objectives}
 
+Students will start their first local network and will capture and analyse several network packets. 
 
-\begin{itemize}[label=--]
-\item Students will define a simple local network with
-  two hosts and
-  will use the ping utility to test the connection between the hosts.
+\begin{enumerate}[label=Objective \arabic*:]
 
-\item If the network is properly defined, the emulator will correctly
-  configure IPv4 addresses for the two hosts. Using standard commands
-  available for hosts running Unix based operating systems, the
-  students will configure IPv6 addresses and will test the
-  connectivity using the IPv6 network protocols.
+\item\label{startstop} Students will start and stop kathara labs using provided lab files; students will work with a lab file that defines a simple local network with two virtual devices.
+
+\item\label{ipv4.2} Students will start the lab and will configure IPv4 addresses on each of the virtual devices. 
+
+\item\label{tcpdump}  Students will use the ping utility to test the local network connectivity between the two hosts created for the lab. Students will use the \emph{tcpdump} command to capture the packets generated by the \emph{ping} command; the students will examine the packets.
+
+\item\label{modifylab} Using the kathara manual page \emph{man kathara-lab.conf}, the students will modify the lab files to add a third device to the network and to automatically configure IPv4 addresses on each device.
+
+\item\label{ipv6.2}  Students will configure IPv6 addresses and will test the
+  connectivity using \emph{ping6}. The students will examine the packets generated by the neighbour discovery protocol when IPv6 link local addresses are generated. 
 
 %% \item Students will use the \emph{tcpdump} program to capture network
 %%   packets. Students will examine captured packets with
@@ -403,500 +423,626 @@ Check the manual page for command \emph{factor}. Run command \emph{factor} on an
 %%   network packet visualization tool such as
 %%   \url{https://hpd.gasmi.net/}. Students will identify the protocols
 %%   that participated in the creation of the captured packets. 
-\end{itemize}
+\end{enumerate}
+
+\subsection{Summary of new commands}
+
+\begin{tabularx}{\textwidth}{r  X}
+  Commands & Description \\ \midrule
+  unzip & unpacks the files from a zip archive \\
+  tcpdump & captures traffic on a network interface \\
+  arp & manipulates  or displays the kernel's IPv4 network neighbour cache \\ \midrule
+  lstart & starts a \kathara\ lab \\
+  lclean & shuts down a lab
+\end{tabularx}
 
 
 \section{Lab activities}
 
+\subsection{Target: \ref{startstop}}\label{2nodes.se}
 
-\subsection{Creating a first network}\label{2nodes.se}
+\begin{enumerate}[label=Activity \arabic*:]
+\item Open the Moodle page on the Lab section. Download the zip file titled \emph{kathara-lab2.zip} to a working directory and unpack the files using \emph{unzip}. 
+  
+\item Change your current directory to the folder where you unpacked
+  the lab files. a folder names \emph{2nodes} should be present. Change into that folder. Run \emph{kathara lstart}. Two terminal windows should open, one for each of the two virtual devices.
 
-To test \kathara\ and to begin the second part of this lab, we must
-define the network to be simulated. This definition resides in a
-collection of configuration files that contains the topology of the
-network as well as configuration files loaded by the virtual nodes in
-the network. We call these configuration files \emph{lab files}.
-
-Lab files are most easily created using the KatharaGUI application,
-strangely available under the systems folder you installed \kathara\ 
-(for example \verb$/opt/kathara/$) 
-or under \verb$/opt/kathara/GUI/$ in your CS network at school. 
-
-The following fields should be filled:
-\begin{description}
-\item[Lab information:] it is a good idea to add a description, so you
-  can distinguish the generated files later on. When submitting
-  exercises for an assignment, be sure to enter your name in the
-  author field.
-\item[Machine informations:] Fill a name for the first machine
-  (host). It is a good idea to provide unique names to the hosts you
-  create. Choose \emph{terminal} as the type for the virtual
-  machine, which generates the simplest start-up scripts for your
-  virtual machine. The other types allow additional configuration
-  scripts to be loaded by your virtual machine at start-up. Press the
-  \emph{Add machine} button to add more virtual machines to the lab. 
-\item[Network interfaces:] Every virtual machine you define should
-  have at least one network interface. A default interface,
-  \verb$eth0$, is available, but you must choose the so called
-  \emph{collision domain} or LAN for that interface. These are
-  typically upper case letters, A, B, C, etc, but can also be any
-  string. Press the \emph{Add interface} button to add additional
-  network interfaces which would be connected to different collision
-  domains. Routers, for example, are expected to have more than one
-  interface and be connected to more than one LAN.  Provide an IP
-  address under field \emph{IP/Net} if you wish to have the interface
-  ready to use once the virtual machine starts up.
-\end{description}
-
-\smallskip
-To create a simple lab consisting of two virtual machines connected together
-in a single Ethernet LAN, follow these steps:
-
-\begin{enumerate}[label=(\arabic*)]
-\item Start the KatharaGUI application. Define a lab with the
-  description ``Lab 0''. Add two machines with names ``pc1'' and
-  ``pc2'' with IP addresses ``10.0.0.1/24'' and ``10.0.0.2/24''
-  respectively. This type of IP address is called \emph{CIDR} address
-  (\url{https://searchnetworking.techtarget.com/definition/CIDR}). 
-  Define the same collision domain, ex ``A'' for the interfaces of
-  both machines. This makes sure both pc1 and pc2 are connected to the
-  same LAN. 
-
-\item Once the configuration is defined, click on the ``Graph'' button
-  at the top of the KatharaGUI window to visualize your network (see
-  Fig.~\ref*{2nodes.fig}). Press
-  ``Download Lab'' to download a zip file with the necessary lab
-  configuration files. Unpack the zip file to a sub-folder somewhere
-  in your working directory, for example in a folder named
-  ``Lab0''. You can inspect the generated files. They are text files.
-
-\item Press ``Save/Load'' to export your lab configuration data to a
-  file for later use.
-\end{enumerate}
-
-\insfig{2nodes}{.5}{A simple network configuration consisting of two
-  hosts connected to the same LAN}
-
-
-\subsection{Testing the first network}
-
-Once the lab configuration file is defined, we can start \kathara\ and
-experiment with our first network.
-
-\begin{enumerate}[label=(\arabic*)]
-\item Change your current directory in the folder where you unpacked
-  the lab files. Run the \kathara\ command
-  \verb$lstart$ (see Section \ref{examples.lab0} for additional
-    information).
-
-  \item Depending on the options passed when you started the lab, you
-    should have access to two shell windows with user root, one on pc1
-    and the other on pc2. Run \verb$ifconfig$ to check the IP address
-    information on both hosts. Run \verb$ping$ to check for
-    connectivity between the two hosts. See Section
-    \ref{examples.lab0}.
-
-  \item Unfortunately, command \verb$netcat$ (also known as \verb$nc$)
-    is not available on the virtual machines, but it can be accessed
-    from your home directory on the host computer, the computer that
-    is running the network simulation. See Section \ref{examples.lab0}
-    about how to execute netcat.
-
-    Run netcat in listening mode on one of the hosts. From the other
-    host, connect netcat to the instance you left listening.
-
-  \item Use netcat to transfer a text file from one host to the
-    other. 
-\end{enumerate}
-
-
-
-\subsection{Examples and other resources}\label{examples.lab0}
-
-\begin{description}
-\item[Configure \kathara:]
-Replace the path to the bin folder in this example with your actual
-path. You can insert this line in your \verb$.bash_rc$ file so that it
-is executed every time you open a new terminal.
-\begin{lstlisting}[language=bash]
-  export NETKIT_HOME=/opt/kathara/bin/
-\end{lstlisting}
-
-\item[Start a \kathara\ lab using gnome-terminal as terminal instead
-  of xterm:] You should consider using this command only if you do not
-  like the terminal opened by default for every virtual host by
-  \kathara. 
-  Change current directory to the directory with the lab files. Then,
-\begin{lstlisting}[language=bash]
-  /opt/kathara/bin/lstart --xterm=gnome-terminal
-\end{lstlisting}
-
-\item[Stop a running \kathara\ lab:] This command is useful also when
-  you cannot start a lab because \kathara\ reports that existing
-  virtual hosts were detected and \kathara\ attempts to link terminals
-  to these hosts. Most likely \kathara\ fails reusing those virtual
-  hosts. Cleaning any trace of previous \kathara\ sessions will solve
-  the problem.
-
-  Change current directory to the
-  directory with the lab files. Then, 
-\begin{lstlisting}[language=bash]
-  /opt/kathara/bin/lclean
-\end{lstlisting}
-
-\item[Start a \kathara\ lab without opening terminals for each virtual
-  machine:] This operation requires root privileges on the host
-  machine (the computer running the simulation), thus you can only run
-  this on your personal computer. You might like this operation in
-  case you only want to open terminals on specific virtual hosts, not
-  on every host as is the default behaviour. 
-
-  Start the lab using the \verb$--noterminals$ option. Then
-  use Linux container management commands (the virtualisation
-  technique that \kathara\ is built on) to find out the process ID of
-  the simulated host you want to interact with. Start a shell on that
-  process.
-
-  %\begin{lstlisting}[language=bash]
   \begin{lstlisting}
-$ /opt/kathara/bin/lstart --noterminals
-========================= Starting Lab ==========================
-lab_description:    two-hosts
-lab_author:         RB
-=================================================================
-e995fdf1bd0480c407692465ddffdd3c1b06b0fe56a40c0c2424dbb1833536e7
-Applying brctl patch to link e995fdf1bd04
-52dca663fd726d8b43e0464b6414e976844814500e52bef2cc3127847b810e9a
-c6d3d7b08aa2963040600128b99997ee890482c4e112df7715cdff1d5da7836a
-net.ipv4.conf.all.rp_filter = 0
-net.ipv4.conf.default.rp_filter = 0
-net.ipv4.conf.eth0.rp_filter = 0
-net.ipv4.conf.lo.rp_filter = 0
-net.ipv4.conf.all.rp_filter = 0
-net.ipv4.conf.default.rp_filter = 0
-net.ipv4.conf.eth0.rp_filter = 0
-net.ipv4.conf.lo.rp_filter = 0
-$ rbenkocz@poppy: ~sudo docker ps
-[sudo] password for rbenkocz: 
-CONTAINER ID        IMAGE                 COMMAND             CREATED             STATUS              PORTS               NAMES
-c6d3d7b08aa2        kathara/netkit_base   "/bin/bash"         21 seconds ago      Up 18 seconds                           netkit_1000_pc2
-52dca663fd72        kathara/netkit_base   "/bin/bash"         23 seconds ago      Up 20 seconds                           netkit_1000_pc1
+$ cd 2nodes/
+$ kathara lstart
+======================= Starting Lab ========================
+Name: 2 nodes
+Description: Simple local network with two hosts and no network configuration
+Version: 2.0
+Author(s): Robert Benkoczi
+Email: robert.benkoczi@uleth.ca
 
-$  sudo docker exec -it 52dca663fd72 /bin/bash
-\end{lstlisting}
+=============================================================
+Deploying collision domains... |##########################################################################| 1/1
+Deploying devices... |####################################################################################| 2/2
+  \end{lstlisting}
+
+\item Run \emph{ifconfig} on each of the two hosts. How many network interfaces does each device have? What are the IP addresses assigned to these network interfaces?
+
+\item Labs created with \emph{lstart} can be stopped using command \emph{kathara lclean} executed from the lab directory. Try it now, shotdown the lab you just started.
+
+  \begin{lstlisting}
+$ kathara lclean
+Deleting devices... |#####################################################################################| 2/2
+Deleting collision domains... |###########################################################################| 1/1
+  \end{lstlisting}
+
+\end{enumerate}
+
+\subsection{Target: \ref{ipv4.2}}\label{ipv4.2.se}
+  
+\begin{enumerate}[resume*]
+\item The \emph{ifconfig} command is used to configure the network interface. Another commad that can be used is \emph{ip}. Invoke the manual (on the host machine) to read the documentation, if needed. Configure IPv4 address 10.0.0.1/24 on interface \emph{eth0} for device pc1, running \emph{ifconfig} as shown below.
+
+  \begin{tabular}{r l}
+    \toprule
+    \multicolumn{2}{l}{\emph{ifconfig} arguments} \\ \midrule
+    eth0 & interface name \\
+    inet & (optional) address family: inet for IPv4, inet6 for IPv6 \\
+    10.0.0.1/24 & IP address to configure \\ \bottomrule
+  \end{tabular}
+
+  \begin{lstlisting}
+root@pc1:/# ifconfig eth0 inet 10.0.0.1/24
+root@pc1:/# ifconfig
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.0.0.1  netmask 255.255.255.0  broadcast 10.0.0.255
+        inet6 fe80::f0f2:2bff:fed8:429d  prefixlen 64  scopeid 0x20<link>
+        ether f2:f2:2b:d8:42:9d  txqueuelen 1000  (Ethernet)
+        RX packets 66  bytes 9398 (9.1 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 7  bytes 826 (826.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+  \end{lstlisting}
+
+  Note: We use the \emph{10.0.0} network address which is used for private networks (networks that are not expected to communicate with other hosts in the Internet \cite{rfc1918}. We assign host address 1 to pc1 and host address 2 to pc2.
+
+\item Configure IPv4 address 10.0.0.2/24 on pc2.
+
+  \end{enumerate}
+
+%%%
+\subsection{Target: \ref{tcpdump}}\label{tcpdump.se}
+
+\begin{enumerate}[resume*]
+\item Once the IPv4 addresses for the network interfaces on pc1 and pc2 are configured as documented in Section \ref{ipv4.2.se}, we can test the network connectivity with \emph{ping}. From pc1, we can ping pc2.
+
+  \begin{lstlisting}
+root@pc1:/# ping -c 4 10.0.0.2
+PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
+64 bytes from 10.0.0.2: icmp_seq=1 ttl=64 time=0.078 ms
+64 bytes from 10.0.0.2: icmp_seq=2 ttl=64 time=0.123 ms
+64 bytes from 10.0.0.2: icmp_seq=3 ttl=64 time=0.118 ms
+64 bytes from 10.0.0.2: icmp_seq=4 ttl=64 time=0.122 ms
+
+--- 10.0.0.2 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3062ms
+rtt min/avg/max/mdev = 0.078/0.110/0.123/0.020 ms
+  \end{lstlisting}
+
+  %%%
+\item We can examine the packets sent and received by \emph{ping} if we capture them using command \emph{tcpdump}:
+\begin{enumerate}
+\item Start the capture program \emph{tcpdump} on pc2.
+\item Run \emph{ping} once more from pc1. Make sure you save the captured packets in a file in subdirectory \emph{/shared} on the virtual device. Files in folder \emph{/shared} on a virtual device are mapped to a folder named \emph{shared} in the lab folder on the host computer.
+\item Interrupt the \emph{tcpdump} program on pc2 by pressing CTRL-C.
+\end{enumerate}
+  More information about \emph{tcpdump} is found in the manual pages \emph{man tcpdump} and several online articles \cite{tcpdump,tcpdump2}.
+
+  \begin{tabularx}{0.9\textwidth}{r X} \toprule
+    \multicolumn{2}{l}{\emph{tcpdump} arguments} \\ \midrule
+    -i eth0 & which network interface to capture from \\
+    -nn & -n tells not to resolve IP addresses into names; with -nn also does not resolve port numbers\\
+    -s0 & -s sets the snap length; with 0 the length is unlimited \\
+    -w filename & write capture to the specified file \\ \bottomrule
+    \end{tabularx}
+
+  \medskip
+  \begin{lstlisting}
+root@pc2:/# tcpdump -i eth0 -nn -s0 -w /shared/ping.pcap
+tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
+^C12 packets captured
+12 packets received by filter
+0 packets dropped by kernel
+  \end{lstlisting}
+
+\item\label{icmp} On the host machine, locate the captured file in folder \emph{shared} in the lab folder. Captured packets can be examined with \emph{Wireshark} (not available in the CS Lab) or with an online packet dissector.
+
+  Open \url{https://hpd.gasmi.net} in a browser. Choose the upload button to upload your file with captured packets. Examine the packets, consult online resources, and try to answer the following questions.
+  \begin{enumerate}[label=\roman*)]
+  \item What protocol is \emph{ping} using? Explain the objectives of the protocol.
+  \item Is the protocol using a specific port number? If yes, what number? Revisit the lecture notes from the first week which overview the services offered by the OSI layer and try to justify the choice for the protocol.
+  \item Examine the header specific to the protocol used by \emph{ping}. Do you identify several types of packets for the protocol? If yes, list the types of packets and how they are distinguished.
+  \end{enumerate}
+
+\item Shutdown the lab. Use \emph{kathara lclean} with the lab directory as the current directory.
+
+\end{enumerate}
+
+%%%%%%%%%%%
+\subsection{Target: \ref{modifylab}}
+
+\begin{enumerate}[resume*]
+\item First, please make sure no labs are currently running. Run \emph{kathara wipe} if unsure. Copy the directory structure of lab \emph{2nodes} to a different folder named \emph{3nodes}. change the current directory to folder \emph{3nodes}.
+
+  \begin{lstlisting}
+$ kathara lclean
+A new version of Kathara has been released.
+Current: 3.1.0 - Latest: 3.2.0
+Please update it from https://github.com/KatharaFramework/Kathara
+Deleting devices... |#####################################################################################| 2/2
+Deleting collision domains... |###########################################################################| 1/1
+$ cd ..
+$ ls
+2nodes/  2nodes.config  2nodes-ipv6.config  2nodes.zip
+$ cp -r 2nodes 3nodes
+$ ls
+2nodes/  2nodes.config  2nodes-ipv6.config  2nodes.zip  3nodes/
+$ cd 3nodes/
+$ ls
+lab.conf  pc1/  pc1.startup  pc2/  pc2.startup  shared/
+  \end{lstlisting}
+
+\item Open \emph{lab.conf} with a text editor. In a different terminal window, open the manual page for \kathara\ labs, \emph{man kathara-lab.conf}. The \emph{lab.conf} sets up the structure of the network. It specifies the hosts (virtual devices), network interfaces, and the collision domains (Ethernet switches) that make up the lab.
+
+  Configurations for each host can be defined in files with extension \emph{.startup}. For example, we will add IPv4 address configuration commands in these files.
+
+  The contents of the \emph{lab.conf} file is the following.
+
+  \lstinputlisting{kathara-labs/2nodes/lab.conf}
+
+  Modify \emph{lab.conf} and add a third host named \emph{pc3} connected to the same collision domain as \emph{pc1} and \emph{pc2}. Also edit the lab metadata, such as title, author, etc.
+
+\item Edit the startup files for \emph{pc1} and \emph{pc2} and add the \emph{ifconfig} command that assigns the appropriate IPv4 addresses to the two hosts. The correct command is already present, in commented form. Uncommend the command. Add the configuration file for \emph{pc3} and assign address 10.0.0.3/24 to \emph{pc3}.
+
+\item Start the new lab. Test if \emph{pc3} is connected to the network. Debug and adjust the lab files if necessary.
+
+\end{enumerate}
 
 
-  \item[Access your home directory from within host machines:] You can
-    save files created from within the virtual hosts by writing them
-    to \verb$/hosthome/$. Similarly, you can read any file from your
-    home directory within each of the virtual hosts by reading the
-    files from folder \verb$/hosthome/$.
+%%%
+\subsection{Target: \ref{ipv6.2}}\label{ipv6.2.se}
 
-  \item[Running netcat in a \kathara\ virtual machine:] Find out the
-    location of netcat (nc) on the host machine. Then copy the
-    executable file to your home directory. From within a virtual
-    machine, execute netcat by invoking the executable copied to your
-    host machine.
- 
-    \begin{lstlisting}[language=bash]
-      $ type -a nc
-nc is /home/rbenkocz/bin/nc
-nc is /bin/nc
-      cp /bin/nc ~
-    \end{lstlisting}
+\begin{enumerate}[resume*]
+\item Ensure that your lab named \emph{3nodes} is running. Look at the network interface \emph{eth0} for one of the virtual hosts and list the addresses associated with the interface. Are there any global IPv6 addresses assigned to the interface?
 
-    On an virtual machine, call nc via folder \verb$/hosthome$.
-    \begin{lstlisting}[language=bash]
-      /hosthome/nc -l 4444  # (on pc1)
+\item Run \emph{ping6} from \emph{pc3} to query the connectivity to \emph{pc1}. What is the correct argument to the command?
 
-      /hosthome/nc 10.0.0.1 4444 (on pc2)
-    \end{lstlisting}
+\item Assign the global IPv6 address 2100::1/64 to \emph{pc1}. Use command \emph{ifconfig} but provide \emph{inet6} as the address family. Note that IPv6 addresses can be added to an interface, but the command must specify the option \emph{add} folowed by the address. Similarly, IPv6 addresses can be deleted from an interface. See the man pages \emph{man ifconfig}.
 
+  \begin{lstlisting}
+root@pc1:/# ifconfig eth0 inet6 add 2100::1/64
+root@pc1:/# ifconfig
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 10.0.0.1  netmask 255.255.255.0  broadcast 10.0.0.255
+        inet6 fe80::acc1:d4ff:fe1d:b075  prefixlen 64  scopeid 0x20<link>
+        inet6 2100::1  prefixlen 64  scopeid 0x0<global>
+        ether ae:c1:d4:1d:b0:75  txqueuelen 1000  (Ethernet)
+        RX packets 98  bytes 13730 (13.4 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 16  bytes 1896 (1.8 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 
-  \item[Configure interface \emph{eth0} with an IPv6 address:] ~
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        inet6 ::1  prefixlen 128  scopeid 0x10<host>
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 4  bytes 280 (280.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 4  bytes 280 (280.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+  \end{lstlisting}
 
-    \begin{lstlisting}
-Script started on Tue Sep  3 06:13:56 2019
-# ls
-bin   dev  home      hostlab  lib64  mnt  proc  run   srv  tmp         usr
-boot  etc  hosthome  lib      media  opt  root  sbin  sys  typescript  var
-# sysctl -a | grep disable_ipv6
-sysctl: reading key "net.ipv6.conf.all.stable_secret"
-net.ipv6.conf.all.disable_ipv6 = 1
-sysctl: reading key "net.ipv6.conf.default.stable_secret"
-net.ipv6.conf.default.disable_ipv6 = 1
-sysctl: reading key "net.ipv6.conf.eth0.stable_secret"net.ipv6.conf.eth0.disable_ipv6 = 1
+\item Ping6 again from \emph{pc3} to query if \emph{pc1} is connected, but use this time \emph{pc1}'s global address, 2100::1. Can the command be completed? Explain why, or why not.
 
-sysctl: reading key "net.ipv6.conf.lo.stable_secret"net.ipv6.conf.lo.disable_ipv6 = 1
+\item Assign global IPv6 addresses 2100::2/64 and 2100::3/64 to \emph{pc2} and \emph{pc3}, respectively. Try now to ping6 \emph{pc1} from \emph{pc3} using \emph{pc1}'s global IPv6 address. Does the command succeed this time?
 
-# sysctl -w net.ipv6.conf.eth0.disable_ipv6=0
-net.ipv6.conf.eth0.disable_ipv6 = 0
-# ifconfig eth0 inet6 add 2100::2/64
-# ping6 2100::1
-PING 2100::1(2100::1) 56 data bytes
-64 bytes from 2100::1: icmp_seq=1 ttl=64 time=0.307 ms
-64 bytes from 2100::1: icmp_seq=2 ttl=64 time=0.140 ms
-64 bytes from 2100::1: icmp_seq=3 ttl=64 time=0.122 ms
-64 bytes from 2100::1: icmp_seq=4 ttl=64 time=0.095 ms
-^C
---- 2100::1 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time 3059ms
-rtt min/avg/max/mdev = 0.095/0.166/0.307/0.082 ms
-    \end{lstlisting}
+  \item Edit the lab files for lab \emph{3nodes} on the host machine so that \emph{pc1}, \emph{pc2}, and \emph{pc3} are automatically assigned the global IPv6 addresses 2100::1, 2100::2, and 2100::3 respectively.
+\end{enumerate}
 
-    
-  \item[Shutting down a \kathara\ lab gracefully:] From within the
-    directory containing the lab files, execute
+\subsection{Cleanup}
 
-    \begin{lstlisting}[language=bash]
-      /opt/kathara/bin/lclean
-    \end{lstlisting}
-
-    
-  \item [Shutting down a \kathara\ lab forced:] Execute
-
-    \begin{lstlisting}[language=bash]
-      /opt/kathara/bin/lwipe
-    \end{lstlisting}
-
-    
-\end{description}
+\begin{enumerate}[resume*]
+\item The most important activity: before you log out, shutdown any running labs. If you are unsure about which labs you are running, execute \emph{kathara wipe}.
+\end{enumerate}
 
 
+%%%%%%%%
 \section{Exercises}
 
 \begin{enumerate}
-\item\label{ipv6.ex} \kathara\ virtual machines can be configured with
-  IPv4 addresses 
-  when creating the lab files in KatharaGUI. In this exercise, you
-  will configure IPv6 addresses to the two virtual hosts, manually,
-  from within each host. Test the connection using \verb$ping6$
-  command. Use netcat to transfer a text file from one host to the
-  other using IPv6 protocols. Use \verb$script$ to capture your
-  command session in a log file.
+\item Start your \emph{3nodes} lab with hosts being assigned IPv4 and global IPv6 addresses. Start packet capture on \emph{pc3} and run \emph{ping6} from \emph{pc1} to \emph{pc2}, using link local and then the global IPv6 addresses (see Section \ref{tcpdump.se}). Examine the packets used by \emph{ping6} and compare them with the packets captured for IPv4 in Section \ref{tcpdump.se}. Shutdown the lab at the end.
+  
+\item With your lab \emph{3nodes} started, run \emph{netcat} over the global IPv6 addresses and send a message from one host to another one. Use UDP or TCP. Shutdown the lab at the end.
 
-\item Create a lab with three virtual machines connected to a single
-  LAN. Configure IPv6 addresses to all three machines. Use
-  \verb$ping6$ to test the connectivity between the three hosts. Can
-  you use netcat to relay the data sent from host 1 to host 3 via host
-  2?
+\item\label{arp} ARP (Address Resolution Protocol) or how the connection between link layer (Ethernet) and network layer (IPv4) addresses is made. Recall the captured packets for \emph{ping} you obtained in Section \ref{tcpdump.se}. If you re-examine one packet, you notice that the IPv4 header contains the source and destination IPv4 address, and the Ethernet header contains the source and destination Ethernet address. When the networking stack creates this packet at the source host, it definitely knows the source and destination IPv4 addresses (the destination is given in the \emph{ping} command), and it also knows its own source Ethernet address. But how can it obtain the destination Ethernet address corresponding to the destination IPv4 address? You will answer this question in this exercise.
+
+  Perform the following steps.
+  \begin{enumerate}[label=(\roman*)]
+  \item\label{first.1} Start lab \emph{3nodes}.
+  \item Start packet capture with \emph{tcpdump} on, say \emph{pc3}. Remember to save the captured packets in the \emph{/shared} folder on \emph{pc3}.
+  \item The operating system maintains a table of neighbour IPv4 / Ethernet addresses called the network neighbour cache. The \emph{arp} command is used to manipulate this table. Examine the manual pages for \emph{arp} (\url{https://www.man7.org/linux/man-pages/man8/arp.8.html} if man arp is not available on the host machine).
+
+    \smallskip
+    \begin{tabularx}{0.9\textwidth}{r l} \toprule
+      \multicolumn{2}{l}{\emph{arp} command line arguments} \\ \midrule
+      $\emptyset$ (no args) & displays the contents of the table \\
+      -d address & deletes the  entry corresponding to \emph{address} \\ \bottomrule
+    \end{tabularx}
+    \smallskip
+
+    Show the arp table from host \emph{pc1}. If it is empty, good!
+    
+  \item From \emph{pc1}, \emph{ping} \emph{pc2} and show again the arp table from host \emph{pc1}. It should have now an entry for \emph{pc2}'s IPv4 address. This means that your captured packets will show how the data for this new entry was obtained.
+    
+  \item (optional) If the arp table was not empty before you started the capture, delete the arp entry in \emph{pc1}'s table for \emph{pc2}. Then, from \emph{pc1}, \emph{ping} \emph{pc2}.
+
+  \item\label{last.1} Stop the packet capture, and shutdown the lab. Examine the captured packets with   \url{https://hpd.gasmi.net}.
+  \end{enumerate}
+
+  Submit the following:
+  \begin{enumerate}[label=(\alph*)]
+  \item A briefly commented script corresponding to your commands for steps \ref{first.1} to \ref{last.1} together with the output. Your comments should indicate your purpose for each command.
+  \item Explain when entries in the arp table are populated. For example, is the table populated when the host starts up? Is it populated on demand? Etc.
+  \item Examine the file with captured packets (.pcap file). Which hosts have placed an ARP request? List the packets containing the ARP request as decoded     by your network packet examination utility.
+    \item Examine the pcap file. Which hosts answer each ARP request?
+      How is the ARP request delivered and what IPv4
+      address is used?
+  \item Assume \emph{pc3}'s arp table is empty and, from \emph{pc3}, we \emph{ping} \emph{pc2}. Briefly describe how the ARP packets are exchanged. 
+  \end{enumerate}
+
+  %%%%%%%% IPv6 neighbour discovery
+\item NDP (Neighbour Discovery Protocol) is a protocol that allows one host to discover the link layer (Ethernet typically) address corresponding to an IPv6 address for a host on the same local network. This exercise is similar to Exercise \ref{arp} but for IPv6 and NDP.
+
+The neighbours table for IPv6 can be examined and manipulated with command \emph{ip}. Please see \url{https://www.linuxtopia.org/online_books/network_administration_guides/Linux+IPv6-HOWTO/Linux_IPv6_HowTo_x1187.html} and also the manual pages, \emph{man ip}.
+
+\smallskip
+\begin{tabularx}{0.9\textwidth}{p{5cm} X} \toprule
+  \multicolumn{2}{l}{\emph{ip} command line arguments} \\ \midrule
+  -6 & use the IPv6 protocol family \\
+  neigh & the object manipulated is the neighbours table \\
+  show & is a command; it displays the neighbours table \\
+  (add/del) IPv6addr lladdr Etheraddr dev device & is a command; it  (adds/deletes) an entry with the specified IPv6 and Ethernet addresses on the given interface\\ \bottomrule
+  \end{tabularx}
+\smallskip
+
+  Perform the following steps.
+  \begin{enumerate}[label=(\roman*)]
+  \item Start lab \emph{3nodes}.
+  \item Start packet capture with \emph{tcpdump} on, say \emph{pc3}. Remember to save the captured packets in the \emph{/shared} folder on \emph{pc3}.
+  \item Examine the contents of the neighbours table on \emph{pc1}.
+  \item Make sure there is no entry for \emph{pc2}'s IPv6 address. If there is, delete the entry with \emph{ip -6 neigh del 2100::2 lladdr <Ethernet addr> dev eth0}.
+  \item ping6 \emph{pc2} from \emph{pc1}.
+  \item Show the neighbours table.
+  \item Stop the capture on \emph{pc3}.
+    \item Open the pcap file with the online packet reader. 
+  \end{enumerate}
+
+      \smallskip
+      Submit the following:
+  \begin{enumerate}[label=(\alph*)]
+  \item A briefly commented script showing your commands described above.
+  \item Select the first neighbour solicitation packet. What are the source and destination IPv6 addresses. How about the source and destination Ethernet addresses?
+    Consult \url{https://www.computernetworkingnotes.com/networking-tutorials/ipv6-multicast-addresses-explained.html}.
+    \item What are the source and destination IP addresses for the reply? Where is the answer stored?
+  \end{enumerate}
 \end{enumerate}
 
 
-%%%%%%%%%%%%%%%%$
 
-\chapter{Lab 1: Capturing and examining packets }\label{tcpdump.se}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Lab 3: manual routing tables}
 
 \section{Objectives}
 
-\begin{itemize}[label=--]
-  \item Students will generate lab files configured with IPv6
-    addresses. 
-\item Students will use the \emph{tcpdump} program to capture network
-  packets. 
-\item Students will examine captured packets with
-  \emph{Wireshark} on their personal computers, or with an online
-  network packet visualization tool such as
-  \url{https://hpd.gasmi.net/}. 
-\item Students will identify the protocols
-  present in the captured packets. 
-\item Students will examine the structure of packets. 
-\item Students will explore the IPv4 Address Resolution Protocol and
-  the corresponding protocol for IPv6 by examining the exchange of
-  relevant packets.
+Students will set up routing tables manually so that packets can be exchanged between the three local networks.
 
-\end{itemize}
+\begin{enumerate}[label=Objective \arabic*:]
+\item\label{unu} Students will examine the default (empty) routing tables for the lab.
+\item\label{addroute} Students will manually add entries in the routing tables to ensure connectivity between LANs.
+\item\label{addipv6} Students will configure the lab with IPv6 addresses and restart the lab.
+\item\label{ipv6route} Students will populate the routing table for IPv6 using \emph{default} rules. 
+\end{enumerate}
+
+
+\subsection{Summary of new commands}
+
+\begin{tabularx}{\textwidth}{r  X}
+  Commands & Description \\ \midrule
+  route & displays and modifies routing tables; \emph{man route} for details \\
+  route -6 & displays and modifies IPv6 routing tables\\
+\end{tabularx}
 
 
 \section{Lab activities}
 
-\subsection{Generate lab files with IPv6 addresses for
-  hosts}\label{2nodes-ipv6.se} 
-
-The KatharaGUI application demonstrated in Chapter \ref{intro.se}
-provides dedicated entries to assign IPV4 addresses to the virtual
-hosts in the network. We will add appropriate commands to the lab
-configuration page in KatharaGUI so that the virtual network is
-automatically configured with IPv6 addresses as well.
-
-\begin{itemize}[label=--]
-\item Start KatharaGUI, and load the config file you created in
-  Chapter \ref{intro.se}. You should see the configuration for a local
-  network with two nodes, with IPv4 addresses allocated to the two
-  nodes.
-  \item Locate the ``Network interfaces'' tab for each of the two
-    machines in the lab. This tab contains an edit box titled
-    ``Directly in pc1(pc2).startup''. The text you enter in these edit
-    boxes is inserted in the startup script being executed, on each
-    of the virtual machines, when they are started. Add the two
-    commands you used to configure IPv6 addresses manually for
-    Exercise \ref{ipv6.ex} on page \pageref*{ipv6.ex}.
-  \item Save the altered configuration file under a different
-    \emph{lab~.config} file. Download the lab files and unpack them in
-    your working folder in your home directory.
-  \item Start the lab using command \verb$lstart$.
-  \item Test your configuration by checking that the IPv6 addresses
-    have been assigned to the network interfaces for each of the
-    virtual machines (command \verb$ifconfig$) and test the connection
-    using IPv6 protocols (command \verb$ping6$).
-\end{itemize}
-
-\subsection{Tcpdump on a simple local network}
-
-\begin{itemize}[label=--]
-\item Start the lab corresponding to the simple local network with
-  IPv6 addresses you
-  created in Section \ref{2nodes-ipv6.se}, if the lab is not already running. 
-\item Execute command \verb$tcpdump$ to capture all packets arriving
-  on the network interface \verb$eth0$ of host pc1. See Section
-  \ref{examples.lab1} for an example that captures all packets and
-  writes them to a file to be analysed later. You can also consult
-  several of the many online resources on \verb$tcpdump$
-  \cite{tcpdump,tcpdump2}. Make sure your packet capture file (pcap
-  file) resides somewhere in your home directory and not on the
-  virtual machine.
-\item On the other host, run command \verb$ping$ to test the
-  connectivity to the machine from where you capture
-  packets. Interrupt \verb$ping$ and \verb$tcpdump$ with CTRL-C.
-\item If you are running the simulation \textbf{on your own computer}, install
-  \emph{Wireshark} (\url{https://www.wireshark.org/}). 
-\item \textbf{If you are working on your own computer}, open the saved
-  packet capture file in \emph{Wireshark}. On the \textbf{school
-    computers}, upload your pcap file to
-  \url{https://hpd.gasmi.net}. Wireshark and gasmi.net are utilities
-  used in the examination of the structure of packets.
-\item Wireshark and gasmi.net decompose each captured packet into
-  several structures (or headers). Each header is created by a
-  different network component from the \emph{protocol
-    stack}\footnote{A protocol stack is a close approximation of the
-    layered organization of the network software components. At the
-    bottom of the protocol stack sit components providing link-layer
-    type services, such as Ethernet. At the top of the stack are
-    components providing application layer type services.} of the
-  machine. 
-
-  Which headers are common to all of the captured packets?
-
-  Find three different types of network packets from your captured
-  file containing a different combination of network headers. For each
-  of the types, enumerate the headers present in the packets. Which
-  headers originate from protocols at the \emph{top} of the protocol
-  stack?  
-\end{itemize}
-
-
-%%%%%
-\subsection{Examples and other resources}\label{examples.lab1}
-
-\begin{description}
-\item[Capture all packets and write them to a packet capture file:] ~
-
-  Useful options:
-  \begin{description}
-    \item [-t] Suppress printing time stamps (not relevant for our
-      simulated environment).
-    \item [-s] Size of captured packets. 0=full packet captured.
-    \item [-i interface] Which interface to capture from.
-    \item [-w file] Write packets to file, to be examined by 3rd party
-      tools like wireshark.
-  \end{description}
-  
-\begin{lstlisting}
-  root@pc1:/# tcpdump -i eth0 -s0 -t -w /hosthome/somelocation/somefile.pcap
-tcpdump: listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
-^C11 packets captured
-11 packets received by filter
-0 packets dropped by kernel
-\end{lstlisting}
-  
 %%%
-\item[Delete an entry corresponding to an address from the ARP
-  table:]~
+\subsection{Target: \ref{unu}}
 
-\begin{lstlisting}[language=bash]
-      arp -d address
-\end{lstlisting}
+\inspdf{1}{1}{Configuration of lab ``3lans''}
+
+\begin{enumerate}[label=Activity \arabic*:]
+\item Examine Fig. \ref{f-1} which shows the structure of the network. There are three local networks illustrated by the three edges in the graph. The hosts are represented by rectangles. Each edge (network) is incident to a rectangle to signify that the host is connected to the respective network. The point of incidence represents the host's interface on that network.
+
+  The network prefix for each network is given next to the corresponding edge in the diagram. The host suffix of the IPv4 addresses for each interface is given next to the point representing the interface. The address of an interface is obtained by concatenating the network prefix with the host suffix. For example the IPv4 address of \emph{eth0} for \emph{pc1} is 55.0.0.2.
+
+  What is the address for \emph{eth0} and \emph{eth1} for \emph{r2}?
+
+\item Download the lab files for the lab titled ``3lans'' from the Moodle page and unpack them in a working directory from your account. Start the lab. Examine the IPv4 addresses assigned to the interfaces of virtual devices \emph{pc1} and \emph{r2} and check if they match the diagram in Fig.~\ref{f-1}.
+
+\item From \emph{pc1} ping \emph{r1} using \emph{r1}'s eth0 interface which is connected on the same network. From \emph{pc1} ping \emph{r1}'s eth1 interface. Explain the results. Run \emph{route} to examine the routing tables.
+  \begin{lstlisting}
+root@pc1:/# ping -c 3 55.0.0.1
+PING 55.0.0.1 (55.0.0.1) 56(84) bytes of data.
+64 bytes from 55.0.0.1: icmp_seq=1 ttl=64 time=0.238 ms
+64 bytes from 55.0.0.1: icmp_seq=2 ttl=64 time=0.109 ms
+64 bytes from 55.0.0.1: icmp_seq=3 ttl=64 time=0.136 ms
+
+--- 55.0.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2027ms
+rtt min/avg/max/mdev = 0.109/0.161/0.238/0.055 ms
+root@pc1:/# ping -c 3 10.0.0.1
+connect: Network is unreachable
+root@pc1:/# ^C
+root@pc1:/# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+55.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
+root@pc1:/#
+  \end{lstlisting}
+
+\item From \emph{r1} ping \emph{pc1} (eth0) and \emph{r2} (eth1). Can \emph{r1} ping \emph{r2}'s eth0? Explain. 
+
+  \begin{lstlisting}
+root@r1:/# ping 55.0.0.2
+PING 55.0.0.2 (55.0.0.2) 56(84) bytes of data.
+64 bytes from 55.0.0.2: icmp_seq=1 ttl=64 time=0.161 ms
+64 bytes from 55.0.0.2: icmp_seq=2 ttl=64 time=0.116 ms
+64 bytes from 55.0.0.2: icmp_seq=3 ttl=64 time=0.123 ms
+^C
+--- 55.0.0.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2045ms
+rtt min/avg/max/mdev = 0.116/0.133/0.161/0.021 ms
+root@r1:/# ping -c3 10.0.0.2
+PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
+64 bytes from 10.0.0.2: icmp_seq=1 ttl=64 time=0.073 ms
+64 bytes from 10.0.0.2: icmp_seq=2 ttl=64 time=0.109 ms
+64 bytes from 10.0.0.2: icmp_seq=3 ttl=64 time=0.117 ms
+
+--- 10.0.0.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2029ms
+rtt min/avg/max/mdev = 0.073/0.099/0.117/0.022 ms
+root@r1:/# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth1
+55.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
+  \end{lstlisting}
+\end{enumerate}
+
+
+%%%
+\subsection{Target: \ref{addroute}}\label{route.ipv4.3.se}
+
+\begin{enumerate}[resume*]
+\item We noticed that packets can be sent from a host to destinations that have entries in the routing table (as expected). So, to ping \emph{r1}'s interface eth1 from \emph{pc1}, the routing table at \emph{pc1} should have an entry for \emph{r1}'s eth1 interface, or it should have a default entry (if no matches by other rules, use the default rule to route packets.
+
+  Add an entry for network 10.0.0.0/24 on \emph{pc1}. From \emph{pc1} ping \emph{r1}'s eth1. Do we have success? Why?
+
+  \begin{lstlisting}
+root@pc1:/# route add -net 10.0.0.0 netmask 255.255.255.0 gw 55.0.0.1
+root@pc1:/# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.0.0.0        55.0.0.1        255.255.255.0   UG    0      0        0 eth0
+55.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
+root@pc1:/# ping -c 3 10.0.0.1
+PING 10.0.0.1 (10.0.0.1) 56(84) bytes of data.
+64 bytes from 10.0.0.1: icmp_seq=1 ttl=64 time=0.178 ms
+64 bytes from 10.0.0.1: icmp_seq=2 ttl=64 time=0.118 ms
+64 bytes from 10.0.0.1: icmp_seq=3 ttl=64 time=0.116 ms
+
+--- 10.0.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2052ms
+rtt min/avg/max/mdev = 0.116/0.137/0.178/0.030 ms
+  \end{lstlisting}
+
+\item We can also configure \emph{pc2}'s routing table so that it can ping \emph{r2}'s interfaces, but this time, add a default entry on \emph{pc2}'s routing table..
+
+  \begin{lstlisting}
+root@pc1:/# route add -net 10.0.0.0 netmask 255.255.255.0 gw 55.0.0.1
+root@pc1:/# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.0.0.0        55.0.0.1        255.255.255.0   UG    0      0        0 eth0
+55.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
+root@pc1:/# ping -c 3 10.0.0.1
+PING 10.0.0.1 (10.0.0.1) 56(84) bytes of data.
+64 bytes from 10.0.0.1: icmp_seq=1 ttl=64 time=0.178 ms
+64 bytes from 10.0.0.1: icmp_seq=2 ttl=64 time=0.118 ms
+64 bytes from 10.0.0.1: icmp_seq=3 ttl=64 time=0.116 ms
+
+--- 10.0.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2052ms
+rtt min/avg/max/mdev = 0.116/0.137/0.178/0.030 ms
+  \end{lstlisting}
+
+\item We can get more daring. From \emph{pc2} ping \emph{r1}'s eth1 interface. What is happening and why?
+  \begin{lstlisting}
+root@pc2:/# ping -c3 10.0.0.2
+PING 10.0.0.2 (10.0.0.2) 56(84) bytes of data.
+64 bytes from 10.0.0.2: icmp_seq=1 ttl=64 time=0.060 ms
+64 bytes from 10.0.0.2: icmp_seq=2 ttl=64 time=0.127 ms
+64 bytes from 10.0.0.2: icmp_seq=3 ttl=64 time=0.128 ms
+
+--- 10.0.0.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2040ms
+rtt min/avg/max/mdev = 0.060/0.105/0.128/0.031 ms
+root@pc2:/# ping -c3 10.0.0.1
+PING 10.0.0.1 (10.0.0.1) 56(84) bytes of data.
+^C
+--- 10.0.0.1 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2041ms
+  \end{lstlisting}
+
+\item So, from \emph{pc2} we can reach r2's interface eth1, but we cannot reach \emph{r1}'s eth1 interface. We see that we, in fact, do reach \emph{r2}'s interface eth1, but the reply from \emph{r1} does not reach \emph{pc2}. We verify this with \emph{tcpdump} from \emph{r1}:
+
+  \begin{lstlisting}
+root@r1:/# tcpdump -i eth1
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eth1, link-type EN10MB (Ethernet), capture size 262144 bytes
+07:39:53.457676 IP 77.0.0.2 > 10.0.0.1: ICMP echo request, id 49, seq 1, length 64
+07:39:54.483611 IP 77.0.0.2 > 10.0.0.1: ICMP echo request, id 49, seq 2, length 64
+07:39:55.507639 IP 77.0.0.2 > 10.0.0.1: ICMP echo request, id 49, seq 3, length 64
+07:39:58.579572 ARP, Request who-has 10.0.0.1 tell 10.0.0.2, length 28
+07:39:58.579604 ARP, Reply 10.0.0.1 is-at f2:d1:bf:63:2a:b2 (oui Unknown), length 28
+  \end{lstlisting}
+
+\item Fix the routing tables by adding the appropriate entry for 77.0.0.0/24 on \emph{r1}. 
+  \begin{lstlisting}
+root@r1:/# route add -net 77.0.0.0 netmask 255.255.255.0 gw 10.0.0.2
+
+root@pc2:/# ping -c3 10.0.0.1
+PING 10.0.0.1 (10.0.0.1) 56(84) bytes of data.
+64 bytes from 10.0.0.1: icmp_seq=1 ttl=63 time=0.205 ms
+64 bytes from 10.0.0.1: icmp_seq=2 ttl=63 time=0.138 ms
+64 bytes from 10.0.0.1: icmp_seq=3 ttl=63 time=0.138 ms
+
+--- 10.0.0.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2038ms
+rtt min/avg/max/mdev = 0.138/0.160/0.205/0.033 ms
+  \end{lstlisting}
+
+\item Similarly, add an appropriate entry for 55.0.0.0/24 in \emph{r2}'s routing table, so that we can ping \emph{r2}'s eth0 from \emph{pc1}. 
+
+\item Can we now ping \emph{pc2} from \emph{pc1}? What is the state of the routing tables? Do you spot the problem?
+  \begin{lstlisting}
+root@pc1:/# ping -c 3 77.0.0.2
+connect: Network is unreachable
+root@pc1:/# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.0.0.0        55.0.0.1        255.255.255.0   UG    0      0        0 eth0
+55.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+root@pc2:/# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         77.0.0.1        0.0.0.0         UG    0      0        0 eth0
+77.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
+
+root@r1:/# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth1
+55.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
+77.0.0.0        10.0.0.2        255.255.255.0   UG    0      0        0 eth1
+
+root@r2:/# route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth1
+55.0.0.0        10.0.0.1        255.255.255.0   UG    0      0        0 eth1
+77.0.0.0        0.0.0.0         255.255.255.0   U     0      0        0 eth0
+  \end{lstlisting}
+
+\item Notice that \emph{pc1} does not know how to route packets for 77.0.0.0/24. We can add an entry for 77.0.0.0/24, or we can replace the entry for 10.0.0.0/24 with a default rule, like for \emph{pc2}.
+  \begin{lstlisting}
+root@pc1:/# route add -net 77.0.0.0 netmask 255.255.255.0 gw 55.0.0.1
+root@pc1:/# ping -c 3 77.0.0.2
+PING 77.0.0.2 (77.0.0.2) 56(84) bytes of data.
+64 bytes from 77.0.0.2: icmp_seq=1 ttl=62 time=0.086 ms
+64 bytes from 77.0.0.2: icmp_seq=2 ttl=62 time=0.062 ms
+64 bytes from 77.0.0.2: icmp_seq=3 ttl=62 time=0.121 ms
+
+--- 77.0.0.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2037ms
+rtt min/avg/max/mdev = 0.062/0.089/0.121/0.026 ms
+  \end{lstlisting}
+
+  \item Verify that \emph{pc1} and \emph{pc2} can ping each other. If yes, you have correctly set-up the routing tables for this small network of LANs.
+\end{enumerate}
 
 %%
-\item[Manipulating the neighbours table in IPv6:]~
+\subsection{Cleanup}
 
-See \url{https://www.linuxtopia.org/online_books/network_administration_guides/Linux+IPv6-HOWTO/Linux_IPv6_HowTo_x1187.html}
+\begin{enumerate}[resume*]
+\item The most important activity: before you log out, shutdown any running labs. If you are unsure about which labs you are running, execute \emph{kathara wipe}.
+\end{enumerate}
 
-\end{description}
+%%%%%%%%%%
 
 \section{Exercises}
 
 \begin{enumerate}
-\item\label{arp.ex} Start the lab you configured in Section
-  \ref*{2nodes-ipv6.se}. Start packet capture on one of the hosts. On
-  the other host, run command \verb$arp$. If it provides any output,
-  delete the IPv4 association from its table (see Section
-  \ref*{examples.lab1}). Run command \verb$ping$ to reach the other
-  host. Execute \verb$arp$ again. On the other host, stop the packet
-  capture process. 
+\item Start lab ``3lans''. Can you configure the routing tables for all four devices  using only default rules in such a way that \emph{pc1} is connected to \emph{pc2} and vice-versa?
 
-  Answer the following questions. 
+\item\label{ipv6.3.ex} (Target: \ref{addipv6}) Copy the lab files for ``3lans'' into a new directory named ``3lans.ipv6''. Assign the following IPv6 addresses to the three networks by editing the startup files for the lab (see Section \ref{ipv6.2.se}). The host suffix for the IPv6 addresses should match the host suffix for the IPv4 addresses.
+
+  \begin{tabular}{l l} \toprule
+    IPv4 address  & IPv6 address \\ \midrule
+    55.0.0.0/24 & 2055::0/64 \\
+    10.0.0.0/24 & 2010::0/64 \\
+    77.0.0.0/24 & 2077::0/64\\ \bottomrule
+  \end{tabular}
+
+  Start lab ``3lans.ipv6'' and ping6 across the local networks to demonstrate that interfaces were correctly set up. Shutdown the lab when done.
+
+\item (Target: \ref{ipv6route}) Start lab ``3lans.ipv6'' (see Exercise \ref{ipv6.3.ex}).
   \begin{enumerate}[label=(\alph*)]
-    \item What is the purpose of the ARP protocol?
+  \item Verify that IPv6 addresses are set appropriately using \emph{ifconfig}. Display the IPv6 routing tables with \emph{route -6}.
+  \item Run the lab activities from Section \ref{route.ipv4.3.se} but for IPv6 this time. An example setting the default IPv6 route for \emph{pc1} is given below.
+    \begin{lstlisting}
+root@pc1:/# ifconfig eth0
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 55.0.0.2  netmask 255.255.255.0  broadcast 55.0.0.255
+        inet6 fe80::b425:89ff:fe2e:c35  prefixlen 64  scopeid 0x20<link>
+        inet6 2055::2  prefixlen 64  scopeid 0x0<global>
+        ether b6:25:89:2e:0c:35  txqueuelen 1000  (Ethernet)
+        RX packets 53  bytes 7878 (7.6 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 9  bytes 1122 (1.0 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 
-    \item Examine the pcap file. Which hosts have placed an ARP
-      request? List the packets containing the ARP request as decoded
-      by your network packet examination utility.
+root@pc1:/# ping6 -c 3 2055::1
+PING 2055::1(2055::1) 56 data bytes
+64 bytes from 2055::1: icmp_seq=1 ttl=64 time=0.056 ms
+64 bytes from 2055::1: icmp_seq=2 ttl=64 time=0.103 ms
+64 bytes from 2055::1: icmp_seq=3 ttl=64 time=0.114 ms
 
-    \item Examine the pcap file. Which hosts answer each ARP request?
-      How is the ARP request delivered and what
-      address is used?
+--- 2055::1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2053ms
+rtt min/avg/max/mdev = 0.056/0.091/0.114/0.025 ms
+root@pc1:/# ping6 -c 3 2010::1
+connect: Network is unreachable
+root@pc1:/# route -6 add default gw 2055::1
+root@pc1:/# ping6 -c 3 2010::1
+PING 2010::1(2010::1) 56 data bytes
+64 bytes from 2010::1: icmp_seq=1 ttl=64 time=0.099 ms
+64 bytes from 2010::1: icmp_seq=2 ttl=64 time=0.095 ms
+64 bytes from 2010::1: icmp_seq=3 ttl=64 time=0.110 ms
 
-    \item List the packets containing the ARP response to the
-      requests. Identify the source Ethernet address and the source IP
-      address from one of the ARP reply packets. At what offset from
-      the start of the packet are these addresses stored? What is the
-      \emph{byte order} (\cite{dordal2019introduction} Section 11.1.5)
-      by which Ethernet and IP addresses are stored in
-      these packets?
+--- 2010::1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2051ms
+rtt min/avg/max/mdev = 0.095/0.101/0.110/0.010 ms
+    \end{lstlisting}
+    
+  \item Demonstrate that \emph{pc1} can ping6 \emph{pc2}.
   \end{enumerate}
-
-%%%
-\item This exercise is equivalent to Exercise \ref*{arp.ex} but for
-  IPv6. Start the lab you configured in Section
-  \ref*{2nodes-ipv6.se}. 
-\begin{itemize}[label=-]
-  \item Run \verb$ifconfig$ and note the output on
-  one of the hosts, then start packet capture on the same host. 
-\item On the other host, run command \verb$ip -6 neigh show$
-  \cite{arpipv6} and note
-  the output. 
-\item \verb$ping6$ the other host using the global address
-  \verb$2100::x$.
-\item Run the \verb$ip$ command once more and note the output.
-\item Now \verb$ping6$ the other host using the \textbf{link local}
-  IPv6 address you discovered from the output of \verb$ifconfig$.
-\item Run the \verb$ip$ command and note the output.
-\end{itemize}
-
-Answer the following questions.
-  \begin{enumerate}[label=(\alph*)]
-    \item What is the protocol $X$ equivalent to ARP in the IPv6 protocol
-      suite? 
-
-    \item What is happening when you execute the sequence of
-      commands from this exercise?
-
-    \item Examine the pcap file. Which hosts have placed a protocol
-      $X$ request? List the packets containing the $X$ request as
-      decoded by your network packet examination utility. Is a request
-      present for the link local IPV6 address too?
-
-    \item Examine the pcap file. Which hosts answer each $X$ request?
-      How is the request delivered and what
-      address is used?
-
-    \item List the packets containing the response to the protocol $X$
-      requests. Identify the source Ethernet address and the source IP
-      address from one of the protocol $X$ reply packets. At what offset from
-      the start of the packet are these addresses stored? 
-  \end{enumerate}
-
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
