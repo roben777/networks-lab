@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 2.0}  %   Use current date. 
+\date{\today\\ version 3.0}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -76,6 +76,7 @@
 \end{figure}
 }
 
+\setcounter{chapter}{-1}
 
 %\newenvironment{console}
 %               {\begin{scriptsize} \begin{verbatim}}{\end{verbatim}  \end{scriptsize}}
@@ -93,13 +94,18 @@
 
 \mainmatter % arabic page nrs
 
-\chapter{Preparing to run the labs at home}\label{intro.se}
+\chapter{Introduction}
+
+This manual documents the lab work for course CPSC 3780 Data Communications and Networking at the University of Lethbridge. The lab sessions introduce the students to some of the network management tools currently used in practice. It provide hands-on experience with some basic tasks in network management, using a networking emulation package called \kathara. New to this version is the addition of a network programming component to the lab activities, which will support students with their project activities.
+
+
+\section{Preparing to run \kathara\ at home}\label{intro.se}
 
 The laboratory experiences in this document use a network emulator called \kathara available at \url{kathara.org}. \kathara is installed in CS labs at the univesity. You may choose to install \kathara\ on your own computer and you can complete the exercises at home, if you wish. \kathara\ is cross platform, although you need a Pro version for the Windows operating system since \kathara\ uses \emph{Docker} (\url{https://www.docker.com/}).
 
-\section{Installing and configuring \emph{\kathara} at home}
+\subsection{Installing and configuring \emph{\kathara} at home}
 
-This section applies only if you wish to install \kathara\ at home. In the CS laboratoory at the university, \kathara\ is already installed.
+This section applies only if you wish to install \kathara\ at home. In the CS laboratory at the university, \kathara\ is already installed.
 
 \begin{tcolorbox}[title=Lab safety note]
   Please exercise common sense when attempting any
@@ -117,34 +123,25 @@ This section applies only if you wish to install \kathara\ at home. In the CS la
   the computer you are installing \kathara\ on. Please do not execute
   this step on the school network.
 
-\item Download the installation files for \kathara\ from
-  \url{https://github.com/KatharaFramework/Kathara/releases}. 
-Download both the \verb$KatharaGUI$ package for your platform and the
-source code package. The source code package contains additional
-folders, for example the \verb$bin$ folder, needed to run the
-emulator. 
+\item Visit \url{https://www.kathara.org/} and follow the instructions to install \kathara\ for your operating system \cite{kathara-wiki}.
 
-\item Unpack both package files into a system folder, such as
-\verb$/opt/kathara$. 
-
-\item Follow the installation instructions from
-\url{https://github.com/KatharaFramework/Kathara/wiki/Linux} for a
-Linux installation or the appropriate instructions for your platform
-available from the wiki page \cite{kathara-wiki}. 
-
+\item A GUI for creating lab configuration files is available from \url{https://gitlab.com/FedericoYusteenappar/Kathara/-/tree/master}. The GUI is just a more convenient tool to create or alter lab configurations. I tis not needed to run \kathara.
+  
 \end{enumerate}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%55
 
 
-\chapter{Lab 1: an introduction to the tools}
+\chapter{Lab 1: introduction}
 
-\section{Objectives}
+\section{Part 1: \kathara}
+
+\subsection{Objectives}
 
 In this lab, students will learn some basic commands and configuration options to get them started with \kathara. No networks are simulated yet. Some basic familiarity with linux shell commands is assumed. Students without experience with shell commands will learn during this lab.
 
-\begin{enumerate}[label=Objective \arabic*:]
+\begin{enumerate}[label=Objective \arabic*]
   \item\label{vstart} Students will start a single device (docker container) with \kathara\ and will execute unix commands including \emph{ifconfig} and \emph{ping}. This tests if their \kathara\ environment is correctly setup.
   \item\label{config} Students will adjust the configuration of their \kathara\ system by changing configuration files.
   \item\label{hosthome} Students will transfer information between their virtual device and the host machine. Students will create files on their virtual devices that can be visible on their host machine, and vice-versa.
@@ -176,9 +173,7 @@ In this lab, students will learn some basic commands and configuration options t
 
 
 
-\section{Lab activities}
-
-\subsection{Target: \ref{vstart}}
+\subsection{Lab activities: \ref{vstart}}
 
 \begin{enumerate}[label=Activity \arabic*:]
 %%   \item To be able to start a device (virtual machine) successfully, as a first step, we need to define an environment variable that points to the install location for the \kathara\ scripts (step 6 in
@@ -189,7 +184,7 @@ In this lab, students will learn some basic commands and configuration options t
 %% \end{verbatim}
 
   %%
-\item Follow the instructions contained in the document ``Start \kathara\ at school'' under the Laboratory section on Moodle.
+%% \item Follow the instructions contained in the document ``Start \kathara\ at school'' under the Laboratory section on Moodle.
   
 \item Start your first virtual device (docker container). Give your device a name. The name will appear in the title bar of the terminal opened for that device. In the example below, the name of the device is ``pc''.
 
@@ -229,7 +224,7 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 \end{lstlisting}
 
-\item The only network interface available to your virtual device started as illustrated in this lab is \emph{lo}. Find out what this network interface is about.
+\item The only network interface available to your virtual device started as illustrated in this lab is \emph{lo}. Find out what this network interface is about by consulting online resources.
 
 \item \emph{ping} is a program that sends a sequence of control packets to the address specified as an argument. It is a standard tool to verify the connectivity between the computer on which ping is executed and the remote computer specified as an argument. The loopback network interface is always available on a device and allows connectivity with the device itself. The name \emph{localhost} identifies the device itself as an address (name actually). We can test the connectivity with the device itself.
 
@@ -263,7 +258,7 @@ INFO - Device `pc1` deleted successfully!
 \end{enumerate}
 
 %%%%%%%%%%
-\subsection{Target: \ref{image}}
+\subsection{Lab activities: \ref{image}}
 
 \begin{enumerate}[resume*]
 \item The \emph{vstart} command has other options besides the mandatory argument \emph{-n}. Check \url{https://www.kathara.org/man-pages/kathara-vstart.1.html} for the man pages. In this activity, you will experiment with a few options for \emph{vstart}. In particular, we will look at the \emph{--image} option. The virtual device you started is actually a \emph{docker container} \cite{docker-useful}. A docker container is built from an \emph{image} which contains all the software needed for the docker application. When starting a virtual device, the default image used for your device is \emph{kathara/quagga}. This image contains packet routing software, \url{https://quagga.net/}. Some useful network tools, such as \emph{netcat} \cite{netcat}, are not available in the default image.
@@ -299,10 +294,10 @@ TIMESTAMP: 2021-09-04 17:02:43.932187
 %$
 \end{enumerate}
 
-\subsection{Target: \ref{config}}
+\subsection{Lab activities: \ref{config}}
 
 \begin{enumerate}[resume*]
-\item For many of the future laboratories, we would like to use the \emph{kathara/base} image. We can change the default behaviour of kathara by editing its configuration file. Open the \emph{./config/kathara.conf} file on the host machine and change the default image. \textbf{While we are here, also change the hosthome\_mount option to true and enable ipv6.}
+\item For many of the future laboratories, we would like to use the \emph{kathara/base} image. We can change the default behaviour of kathara by editing its configuration file. Open the \emph{~/.config/kathara.conf} file on the host machine and change the default image. \textbf{While we are here, also change the hosthome\_mount option to true and enable ipv6.}
 \begin{lstlisting}
 {
  "image": "kathara/base",
@@ -322,7 +317,7 @@ TIMESTAMP: 2021-09-04 17:02:43.932187
 \end{lstlisting}
 \end{enumerate}
 
-\subsection{Target: \ref{hosthome}}
+\subsection{Lab activities: \ref{hosthome}}
 
 \begin{enumerate}[resume*]
 \item One important feature of the network emulator is the ability of transfering information (for example network capture files) between the virtual devices and the host computer. On any virtual device, if the \kathara\ configuration option \verb$hosthome_mount$ is enabled, the host computer home directory is accessible to the virtual device via the directory \verb$/hosthome$ on the virtual device.
@@ -331,13 +326,13 @@ TIMESTAMP: 2021-09-04 17:02:43.932187
   \item Create a working folder in your home directory \textbf{on the host computer} named \emph{work1}.
   \item Make sure the \kathara\ configuration option \emph{hosthome\_mount} is enabled.
   \item Make sure you have a virtual device started \emph{after} the hosthome mount option is enabled.
-  \item In the terminal window of the virtual device, navigate to the directory you just created. Use the text editor \emph{nano} to create a text file with some line of text, such as ``Hello world.''.
+  \item In the terminal window of the virtual device, change to the directory \emph{/hosthome}. What do you see if you list the files there? Navigate to the directory you just created. Use the text editor \emph{nano} to create a text file with some line of text, such as ``Hello world.''.
   \item In the terminal window on the host machine, navigate to the \emph{work1} directory. List it with \emph{ls}. Does the file you created from the virtual device exist and is it accessible on the host machine? Which user owns the file (run \emph{ls -l})? Can you remove it from the host machine? (If not, you can remove it from the virtual device).
   \end{itemize}
 
 \end{enumerate}
 
-\subsection{Target: \ref{bridged}}
+\subsection{Lab activities: \ref{bridged}}
 
 \begin{enumerate}[resume*]
 \item The virtual devices we started so far have only one network interface enabled, the loopback interface. It is possible to instruct \kathara\ to ``connect'' the virtual device to the host computer via a second network interface on the virtual device. This is achieved with command line option \emph{--bridged} with the \emph{vstart} command.
@@ -385,7 +380,7 @@ Check the manual page for command \emph{factor}. Run command \emph{factor} on an
 
 \item Start a virtual device. On the virtual device, run command \emph{ifconfig} and redirect its contents to a file in the work directory on your host machine. List the contents of the file from the host machine. You can use character $>$ followed by the file name to redirect the output of any command, from the console to the specified file (see Exercise \ref{redirect}).
 
-\item Start a virtual device that is \emph{bridged} with the host computer. Find out the IPv6 addresses of the virtual device and the corresponding link local IPv6 address of the host machine. Use IPv6 with \emph{ping6} and perform the following tasks (remember to append the network interface name to link local IPv6 addresses):
+\item Start a virtual device that is \emph{bridged} with the host computer. Find out the IPv6 addresses of the virtual device and the corresponding link local IPv6 address of the host machine. Use IPv6 with \emph{ping6} and perform the tasks below. Note that a link local IPv6 address can only be used to reach network interfaces on the same network, as its name suggests. Routing \footnote{Figuring out the particular network interface that a packet should be sent to in order to reach another network} ignores link local addresses, therefore we need to specify the network interface when using link local addresses. This is done by appending the network interface name to the link local IPv6 address using the \% notation, as in \lstinline$address%interface$. 
 \begin{enumerate}[label=(\alph*)]
 \item Test the connectivity via IPv6 with \emph{ping6}, from the host machine to the virtual device.
 \item Test the connectivity via IPv6 with \emph{ping6}, from the virtual device to the host machine.
@@ -393,8 +388,67 @@ Check the manual page for command \emph{factor}. Run command \emph{factor} on an
 \item Are you able to \emph{ping6} the virtual device from the host machine using the link local IPv6 address of the virtual device but with the real network interface of the host machine after the \% character? Explain.
 \end{enumerate}
 
-\item Start a virtual device that is \emph{bridged} with the host computer. Compile, on your HOST machine, a program capable of sending a UDP packet using IPv6 (or IPv4) (revisit your first two labs). Start \emph{netcat} on the virtual device in listen mode. Send a message using your program on the host machine to the \emph{netcat} process on the virtual device.
+\item Start a virtual device that is \emph{bridged} with the host computer. Start \emph{netcat} on the virtual device in listen mode. Send a message to the \emph{netcat} process on the virtual machine using \emph{netcat} on the host machine. For a short tutorial on \emph{netcat} and how to use it for chat, see \url{https://allabouttesting.org/netcat-tutorial-for-beginners/} or any other relevant online resource.
 \end{enumerate}
+
+
+%%%
+\section{Part 2: network programming}
+
+In this part of the lab, students will explore the programming libraries that will help them complete the project for the class. Network programming requires processing asynchronous events and this can be handled with multiple threads of execution. Threads can be avoided with advanced operating system calls such as \emph{select}, but I feel threads can be useful in other situations as well, so there is no harm in learning to program them. We start with basic multi-threaded programming and thread synchronization approaches. 
+
+\subsection{Objectives}
+
+Students will write a C++ program that starts several threads. The program will end when all threads end.
+
+\begin{enumerate}[label=Objective \arabic*]
+\item\label{thread.start} Using the C++ STL, students will write code that starts threads of execution.
+\item\label{thread.sleep} Students will write code that can wait (sleep) for a given period of time.
+\end{enumerate}
+
+
+\subsection{Summary of routines}
+
+\begin{tabularx}{\textwidth}{r  X}
+  C++ Class or routine & Description \\ \midrule
+  \lstinline$std::thread$ & spawns a new thread when a thread object is constructed  \\
+  \lstinline$std::this_thread::sleep_for$ & puts currently running thread to sleep
+\end{tabularx}
+
+\subsection{Lab activities: warm-up}
+
+\begin{enumerate}[label=Activity \arabic*:]
+  
+\item Consider the following output function:
+
+  \begin{lstlisting}[language=C++]
+    void print(int n, char c) {
+      for (int i = 0; i < n; i++) {
+        std::cout << c << ' ';
+      }
+    }
+  \end{lstlisting}
+
+  Examine the code and explain what this function does.
+
+\item Create a working directory and a source file called \emph{sequential.cc} inside. Include the \emph{print} function and define \emph{main} to call \emph{print} twice. An example is shown below. Compile and execute your program.
+
+  \begin{lstlisting}[language=c]
+    int main() {
+      print(100, 'a');
+      print(100, 'b');
+      return 0;
+    }
+  \end{lstlisting}
+\end{enumerate}
+
+
+\subsection{Lab activities: \ref{thread.sleep}}
+
+  \begin{enumerate}[resume*]
+  \item We can modify function print to slow it down a little. In the for loop of print, instruct the program to sleep for 50 ms after each output character. For example:
+    
+  \end{enumerate}
 
 %%%%%%%%%%%%%%%%%
 
@@ -404,7 +458,7 @@ Check the manual page for command \emph{factor}. Run command \emph{factor} on an
 
 Students will start their first local network and will capture and analyse several network packets. 
 
-\begin{enumerate}[label=Objective \arabic*:]
+\begin{enumerate}[label=Objective \arabic*]
 
 \item\label{startstop} Students will start and stop kathara labs using provided lab files; students will work with a lab file that defines a simple local network with two virtual devices.
 
@@ -437,9 +491,7 @@ Students will start their first local network and will capture and analyse sever
 \end{tabularx}
 
 
-\section{Lab activities}
-
-\subsection{Target: \ref{startstop}}\label{2nodes.se}
+\subsection{Lab activities: \ref{startstop}}\label{2nodes.se}
 
 \begin{enumerate}[label=Activity \arabic*:]
 \item Open the Moodle page on the Lab section. Download the zip file titled \emph{kathara-lab2.zip} to a working directory and unpack the files using \emph{unzip}. 
