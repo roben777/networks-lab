@@ -5,7 +5,7 @@
 \usepackage[margin=2cm]{geometry}
 \usepackage{enumitem}
 %\usepackage{url}
-\usepackage{siunitx}
+%\usepackage{siunitx}
 \usepackage{listings}
 \usepackage{graphicx} 
 \usepackage{booktabs} % for much better looking tables
@@ -403,7 +403,9 @@ Students will write a C++ program that starts several threads. The program will 
 
 \begin{enumerate}[label=Objective \arabic*]
 \item\label{thread.start} Using the C++ STL, students will write code that starts threads of execution.
-\item\label{thread.sleep} Students will write code that can wait (sleep) for a given period of time.
+% \item\label{thread.sleep} Students will write code that can wait (sleep) for a given period of time.
+\item\label{mutex} Students will use a mutex object to exclude concurent execution of portions of the code in a multi-threaded environment.
+\item\label{lock.guard} Students will control the mutex through a \lstinline$lock_guard$ object that guarantees a safe lock/unlock mechanism.
 \end{enumerate}
 
 
@@ -412,7 +414,9 @@ Students will write a C++ program that starts several threads. The program will 
 \begin{tabularx}{\textwidth}{r  X}
   C++ Class or routine & Description \\ \midrule
   \lstinline$std::thread$ & spawns a new thread when a thread object is constructed  \\
-  \lstinline$std::this_thread::sleep_for$ & puts currently running thread to sleep
+  %  \lstinline$std::this_thread::sleep_for$ & puts currently running thread to sleep
+  \lstinline$std::mutex$ & when locked, any other attempts to lock the mutex by other processes will block the processes \\
+  \lstinline$std::lock_guard$ & an object that manages mutexes
 \end{tabularx}
 
 \subsection{Lab activities: warm-up}
@@ -424,7 +428,7 @@ Students will write a C++ program that starts several threads. The program will 
   \begin{lstlisting}[language=C++]
     void print(int n, char c) {
       for (int i = 0; i < n; i++) {
-        std::cout << c << ' ';
+        std::cout << c << std::flush << ' ' << std::flush;
       }
     }
   \end{lstlisting}
@@ -443,13 +447,113 @@ Students will write a C++ program that starts several threads. The program will 
 \end{enumerate}
 
 
-\subsection{Lab activities: \ref{thread.sleep}}
+%% \subsection{Lab activities: \ref{thread.sleep}}
+
+%%   \begin{enumerate}[resume*]
+%%   \item We can modify function print to slow it down a little. This will help us appreciate the behaviour of the program once we start using threads. In the for loop of print, instruct the program to sleep for 50 ms after each output character.
+
+%%     \begin{lstlisting}[language=c]
+%%       void print(int n, char c) {
+%%         for (int i = 0; i < n; i++) {
+%%           std::cout << c << ' ' << std::flush;
+%%           std::this_thread::sleep_for(std::chrono::milliseconds(50));
+%%         }
+%%       }
+%%     \end{lstlisting}
+
+%%     The output modifier \lstinline$std::flush$ forces the output operator to immediately produce the output. Normally, the output produced by the output stream operator is buffered and there is no guaranteed time when the output is actually sent to the console.
+
+%%   \item Examine the documentation for the helper class \verb$milliseconds$ and for the function \verb$sleep_for$. Use \url{cppreference.com}. Are there any other helper classes to represent duration?
+
+%%   \item Compile and execute the program. Choose other values for the wait time and re-run.
+%%   \end{enumerate}
+
+
+  \subsection{Lab activities: \ref{thread.start}}
 
   \begin{enumerate}[resume*]
-  \item We can modify function print to slow it down a little. In the for loop of print, instruct the program to sleep for 50 ms after each output character. For example:
-    
+  \item Copy your code from file \emph{sequential.cc}  into a file named \emph{parallel.cc}. Modify the main function to change the first call to print into spawning a thread that executes the print function. Make sure to \lstinline$#include <thread>$. Compile and execute.
+
+    \begin{lstlisting}[language=c]
+      int main() {
+        std::thread t1(print, 100, 'a');
+        print(100, 'b');
+
+        t1.join();
+        
+        return 0;
+      }
+    \end{lstlisting}
+
+    Calling \verb$join$ on a thread blocks the calling process until the thread finishes execution.
+
+    \item Change function \verb$main$ so that both print function calls are executed by a parallel thread each.
   \end{enumerate}
 
+
+  \subsection{Lab activities: \ref{mutex}}
+
+  \begin{enumerate}[resume*]
+  \item When we run the \emph{parallel.cc} example, we may notice that the output produced is not always nicely arranged. The console output from one thread may occur between the output of the character and the space of the other thread. Suppose that we consider one iteration of the for loop in \emph{print} a \emph{critical section} and we want to ensure that no other thread is outputting until the iteration ends.
+
+    We can use a mutex (MUTual EXclusion) to limit the parallel execution of portions of the code. See \url{https://riptutorial.com/cplusplus/example/26751/mutexes---thread-safety} for more details.
+
+    Copy the code from file \emph{parallel.cc} into file \emph{parallel-mutex.cc}. Define a mutex object as a global variable. Lock the mutex at the start of the loop iteration, and unlock the mutex at the end.
+
+    \begin{lstlisting}[language=c]
+      std::mutex print_mutex;
+     
+      void print(int n, char c) {
+        for (int i = 0; i < n; i++) {
+            print_mutex.lock(); 
+            std::cout << c << std::flush << ' ' << std::flush;
+            print_mutex.unlock();
+        }
+      }
+    \end{lstlisting}
+
+  \item Compile and run. What do you notice?
+
+  \item Modify the code to change the declaration of \lstinline$print_mutex$ from a global variable to a variable local to function \emph{print}. Compile and run. What do you notice
+
+    \item Modify the code back with a globally declared mutex. Then, comment out the call to unlock the mutex. Compile and run. What do you notice. Explain.
+  \end{enumerate}
+
+
+  \subsection{Lab activities: \ref{lock.guard}}
+
+  \begin{enumerate}[resume*]
+  \item The lock/unlock mechanism on a mutex is prone to errors. Forgetting to unlock a mutex can lead to a deadlock. In C++, we can manage a mutex using a \lstinline$lock_guard$ object. A lock guard locks a mutex when the lock guard is constructed and unlocks the mutex when the lock guard is destructed.
+
+    Copy the code from file \emph{parallel-mutex.cc} into file \emph{parallel-lock-guard.cc}. Modify the \verb$print$ function as follows.
+
+    \begin{lstlisting}[language=c]
+      void print(int n, char c) {
+        for (int i = 0; i < n; i++) {
+          // this block statement is executed as an atomic operation;
+          {
+            std::lock_guard<std::mutex> lock(print_mutex); // construction locks the mutex
+            std::cout << c << std::flush << ' ' << std::flush;
+          }    // destruction unlocks the mutex 
+        }
+      }
+    \end{lstlisting}
+
+    Compile and execute.
+  \end{enumerate}
+
+  \subsection{Conclusion}
+
+  Use the thread class to start parallel threads. Declare a mutex and create a \verb$lock_guard$ object to manage the mutex and to avoid concurrent execution of certain portions of your code.
+
+
+  \section{Exercises}
+
+  \begin{enumerate}[label=\arabic*.]
+  \item Write code that spawns 30 parallel threads. Each thread is executing the \verb$print$ function illustrated in the lab activities. Please end the main program when all threads spawned are finished. Hint: store thread objects in an array.
+  \end{enumerate}
+
+  
 %%%%%%%%%%%%%%%%%
 
 \chapter{Lab 2: creating networked devices}
