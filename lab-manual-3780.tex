@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.0}  %   Use current date. 
+\date{\today\\ version 3.0.1}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -558,7 +558,9 @@ Students will write a C++ program that starts several threads. The program will 
 
 \chapter{Lab 2: creating networked devices}
 
-\section{Objectives}
+\section{\kathara}
+
+\subsection{Objectives}
 
 Students will start their first local network and will capture and analyse several network packets. 
 
@@ -598,7 +600,7 @@ Students will start their first local network and will capture and analyse sever
 \subsection{Lab activities: \ref{startstop}}\label{2nodes.se}
 
 \begin{enumerate}[label=Activity \arabic*:]
-\item Open the Moodle page on the Lab section. Download the zip file titled \emph{kathara-lab2.zip} to a working directory and unpack the files using \emph{unzip}. 
+\item Open the Moodle page on the ``Lab resources'' section. Locate the folder named `` `` which contains resources needed to complete the lab activities. Download the zip file titled \emph{2nodes.zip} to a working directory and unpack the files using \emph{unzip}. 
   
 \item Change your current directory to the folder where you unpacked
   the lab files. a folder names \emph{2nodes} should be present. Change into that folder. Run \emph{kathara lstart}. Two terminal windows should open, one for each of the two virtual devices.
@@ -620,7 +622,7 @@ Deploying devices... |##########################################################
 
 \item Run \emph{ifconfig} on each of the two hosts. How many network interfaces does each device have? What are the IP addresses assigned to these network interfaces?
 
-\item Labs created with \emph{lstart} can be stopped using command \emph{kathara lclean} executed from the lab directory. Try it now, shotdown the lab you just started.
+\item Labs created with \emph{lstart} can be stopped using command \emph{kathara lclean} executed from the lab directory. Try it now, shutdown the lab you just started.
 
   \begin{lstlisting}
 $ kathara lclean
@@ -825,7 +827,9 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
   
 \item With your lab \emph{3nodes} started, run \emph{netcat} over the global IPv6 addresses and send a message from one host to another one. Use UDP or TCP. Shutdown the lab at the end.
 
-\item\label{arp} ARP (Address Resolution Protocol) or how the connection between link layer (Ethernet) and network layer (IPv4) addresses is made. Recall the captured packets for \emph{ping} you obtained in Section \ref{tcpdump.se}. If you re-examine one packet, you notice that the IPv4 header contains the source and destination IPv4 address, and the Ethernet header contains the source and destination Ethernet address. When the networking stack creates this packet at the source host, it definitely knows the source and destination IPv4 addresses (the destination is given in the \emph{ping} command), and it also knows its own source Ethernet address. But how can it obtain the destination Ethernet address corresponding to the destination IPv4 address? You will answer this question in this exercise.
+\item\label{arp} ARP (Address Resolution Protocol) or how the connection between link layer (Ethernet) and network layer (IPv4) addresses is made. Recall the captured packets for \emph{ping} you obtained in Section \ref{tcpdump.se}. If you re-examine one packet, you notice that the IPv4 header contains the source and destination IPv4 address, and the Ethernet header contains the source and destination Ethernet address. This is because the data link layer (Ethernet) uses Ethernet addresses to identify hosts and communicate with them.
+
+ When the networking stack creates this packet at the source host, it definitely knows the source and destination IPv4 addresses (the destination is given in the \emph{ping} command), and it also knows its own source Ethernet address. But how can it obtain the destination Ethernet address corresponding to the destination IPv4 address? This is needed because the data link layer needs to transmit the frame to the destination by providing the Ethernet address of the destination, if that destination resides on the same local network. You will answer this question in this exercise.
 
   Perform the following steps.
   \begin{enumerate}[label=(\roman*)]
