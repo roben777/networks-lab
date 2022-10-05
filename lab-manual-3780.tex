@@ -903,6 +903,99 @@ The neighbours table for IPv6 can be examined and manipulated with command \emph
 \end{enumerate}
 
 
+%%%%%%%%%%%%%%%%%
+\chapter{Project lab 2: timers and packet headers}
+
+In this lab, students will use STL classes to implement the timer functionality needed when programming the typical action-confirmation network protocol behaviour. In this scenario, a process performs an action such as sending a data packet to a peer process, and then it waits to receive a confirmation from the peer process. The confirmation may or may not arrive. If the confirmation arrives, the sending process should resume execution right away. If the confirmation does not arrive, the sending process should resume execution after a maximum wait time (the timer value). The sending process must be able to distinguish the two cases - confirmation received or timer expired. We can implement this behaviour with a \emph{condition variable} object from the STL.
+
+In the second part of the lab, students will design, implement, and test a class whose responsibilities are to manipulate the fields of a packet header.
+
+\section{Objectives}
+
+\begin{enumerate}[label=Objective \arabic*:]
+\item\label{unu.l2} Students will explore the signaling features of a condition variable object. Students will also compile and build simple programs using condition variables. 
+\item\label{doi.l2} Students will implement an expiration timer using condition variablea.
+\item\label{trei.l2} Students will design, implement, and test a class responsible for writing and reading the various fields of the header for the course transport protocol. The course transport protocol is the course project for CPSC 3780.
+\item\label{patru.l2} Students will use the \emph{Google test} framework (refer to CPSC 2720) to test their class.
+
+\end{enumerate}
+
+\subsection{Summary of classes}
+
+\begin{tabularx}{\textwidth}{r  X}
+  Classes & Description \\ \midrule
+  \lstinline$std::condition_variable$ & class with various process signaling responsibilities; see \url{https://cplusplus.com/reference/condition_variable/condition_variable/} \\
+  \lstinline$std::mutex$ & blocks threads  when trying to lock a mutex more than once\\
+  \lstinline$std::unique_lock$ & manages a mutex and implements a more complex locking and unlocking protocol \\
+  \lstinline$wait_for$ & member function of condition variable; uses a \lstinline$unique_lock$ to wait for a given period of time or until notified through the condition variable, whichever occurs first
+\end{tabularx}
+
+
+\subsection{Lab activities: \ref{unu.l2}}
+
+A condition variable can be used by threads to signal each other. We can explore these features next.
+
+\begin{enumerate}[label=Activity \arabic*:]
+
+\item\label{pa2.unu} A condition variable can be constructed using the default constructor. Since condition variables are used for signaling, important  member functions are the \emph{notify} functions. 
+
+  Write a program that constructs a condition variable and then notifies the condition variable.
+
+  \lstinputlisting{src/2-timers/2-notify.cc}
+
+\item Compile and execute the program:
+
+  \begin{lstlisting}
+$ g++ -o 2-notify -lpthread 2-notify.cc 
+$ ./2-notify 
+Before notify
+After notify
+  \end{lstlisting}
+
+  What do you notice? A condition variable can only be constructed using the default constructor. We can then invoke the notify functions, but nothing interesting happens because there is no other thread using the condition variable.
+
+\item Modify the code from \ref{pa2.unu} to create two threads that use the same condition variable.
+
+  \lstinputlisting{src/2-timers/2-threads.cc}
+
+  Compile and run the program several times. What do you notice? Nothing interesting, the threads that call \emph{notify} repeatedly on the condition variable don't seem to be affected by the condition variable.
+
+\item In order for some interaction to happen between threads, one of the threads should \emph{wait} and block on the condition variable. The wait functions require a lock on a mutex to be able to wait.
+
+  Write a program with two threads. One thread, the sleeper, waits on the condition variable. The other notifies the condition variable after a delay of 1 sec. Compile, run, and check that the sleeper thread wakes up.
+
+  \lstinputlisting{src/2-timers/2-sleeper.cc}
+\end{enumerate}
+
+\subsection{Lab activities: \ref{doi.l2}}\label{wakesleep.se}
+
+
+\begin{enumerate}[resume*]  
+\item Extend the program above so that the sleeper thread uses the \lstinline$wait_for$ function on the condition variable. Perform the following changes to the source code:
+  \begin{itemize}[label=--]
+  \item Replace the wait function by \lstinline$wait_for$ in the sleeper thread. The sleeper should wait for 1 sec.
+    
+  \item Test the return value from the wait function in the sleeper. If the return value equals \lstinline$std::cv_status::timeout$, then the timer expired before the sleeper was notified, otherwise the sleper was notified and resumed execution. Out a message from the sleeper thread to identify if the sleeper thread was notifies by the waker or if the timer for the wait expired.
+
+  \item In the waker, change the initial wait time from 1 sec to a random value between 0 and 2 sec, so the waker notifies the sleeper after waiting for a randomly chosen period of time. Use the \lstinline$std::rand()$ function to generate a random value between 0 and 2000 milli sec. Use \lstinline$std::srand(std::time(NULL));$ to seed the random number generator.
+  \end{itemize}
+
+  Compile the program and run it repeatedly. What do you notice? You shouild see that in approximately half of the runs, the sleeper timer expires. 
+  
+\end{enumerate}
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Starting from the waker/sleeper source code developped in Section \ref{wakesleep.se}, extend its functions so that the following features are available:
+  \begin{enumerate}[label=\alph*)]
+  \item There are two sleeper threads.
+  \item The waker can randomly choose to wake one of the sleeper threads or the other. The other thread's waiting period expires.
+  \item Output messages should clarify which operations are carried out by threads and by which threads. In particular, you should assign an ID to each of the sleeper threads, for exaample, by passing the ID as an argument to its function.
+    \item Explain your approach in a short PDF report: are you using different condition variables? Are you using the same condition variable? Justify your choices. 
+  \end{enumerate}
+\end{enumerate}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Lab 3: manual routing tables}
