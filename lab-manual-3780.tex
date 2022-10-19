@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.0.1}  %   Use current date. 
+\date{\today\\ version 3.0.2}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -904,7 +904,7 @@ The neighbours table for IPv6 can be examined and manipulated with command \emph
 
 
 %%%%%%%%%%%%%%%%%
-\chapter{Project lab 2: timers and packet headers}
+\chapter{Project lab 2: timers}
 
 In this lab, students will use STL classes to implement the timer functionality needed when programming the typical action-confirmation network protocol behaviour. In this scenario, a process performs an action such as sending a data packet to a peer process, and then it waits to receive a confirmation from the peer process. The confirmation may or may not arrive. If the confirmation arrives, the sending process should resume execution right away. If the confirmation does not arrive, the sending process should resume execution after a maximum wait time (the timer value). The sending process must be able to distinguish the two cases - confirmation received or timer expired. We can implement this behaviour with a \emph{condition variable} object from the STL.
 
@@ -1297,6 +1297,267 @@ rtt min/avg/max/mdev = 0.095/0.101/0.110/0.010 ms
   \item Demonstrate that \emph{pc1} can ping6 \emph{pc2}.
   \end{enumerate}
 \end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%
+\chapter{Project lab 3: packet headers, sliding windows}
+
+In this lab, the students will start to develop code for setting and extracting information from binary packet headers. The students will also develop and test the logic for manipulating sequence numbers and sliding windows. Google unit tests will be very useful to test these important project components, and, if students are familiar with test driven development, they can be also used for development.
+
+\section{Objectives}
+
+\begin{enumerate}[label=Objective \arabic*]
+  \item\label{pl3.maps} Students will read and create bit header maps for various headers. 
+\item\label{pl3.bit} Students will use shift and bit-wise operations to set and get bit fields that are smaller than 8 bits.
+\item\label{pl3.byte} Students will use shift, bit-wise, and array access operations to manipulate numerical fields that are multiples of 8 bits, stored in big-endian or network byte order.
+\item\label{pl3.head} Students will modify a C++ class that manipulates header fields. Students will use Google tests to test this header management class.
+\item\label{pl3.abs} Students will define, on paper, abstract classes for the sliding window protocol for the sender and the receiver.
+\item\label{pl3.test} Students will document the behaviour of the sliding window methods using \emph{acceptance tests}.
+  \item\label{pl3.impl} Students will implement concrete classes for the sender and receiver sliding window module; students will write Google tests for their acceptance tests.
+\end{enumerate}
+
+\subsection{Resources}
+
+\begin{itemize}[label=--]
+\item Bit-wise and shift operators in C++: \url{https://www.geeksforgeeks.org/bitwise-operators-in-c-cpp/}
+\item Google test primer: \url{https://google.github.io/googletest/primer.html}
+\item Learning TDD with katas (optional): \url{https://social.technet.microsoft.com/wiki/contents/articles/30940.learning-test-driven-development-with-tdd-katas.aspx}
+\end{itemize}
+
+
+\section{Lab activities}
+
+\subsection{\ref{pl3.maps}}
+
+You can work on the following activities in groups, if you wish.
+
+\begin{enumerate}[label=Activity \arabic*:]
+\item Most networkig layers add information to the packets they handle. This information is usually added at the begining of a packet and is stored in binary form, to minimize the length of the packet.
+
+  The structure of the information is represented by a \emph{header map}, a representation that lists the location of various numerical values in a table like format. Columns in this format may identify bits fields. For example, an array of 3 byte values can be shown as follows.
+
+\begin{verbatim}
+  0        7
+ +----------+
+ |  1st val |
+ +----------+
+ |  2nd val |
+ +----------+
+ |  3rd val |
+ +----------+
+\end{verbatim}
+
+An array of two 16 bit numerical values can be shown as follows.
+\begin{verbatim}
+  0               15
+ +-----------------+
+ |  1st 16 bit val |
+ +-----------------+
+ |  2nd 16 bit val |
+ +-----------------+
+\end{verbatim}
+
+A header containing fields of different sizes: the field \emph{Val} is a 2 bit value stored as the most two significant bits of the first byte in the header; the \emph{payload} is a 16 bit value stored starting with the 16-th bit in the structure.
+\begin{verbatim}
+ 0   1 2   7 8  15 16     31
++=====+=====+=====+=========+
+| Val | unu | unu | payload |
+|     | sed | sed | length  |
++=====+=====+=====+=========+ 
+\end{verbatim}
+
+On a sheet of paper, sketch an updated header map that consists of the Val and payload length fields above + two other 16 bit values, labeled A and B.
+
+
+\item In the diagrams, small bit indices correspond to the most significant bits in a byte. Similarly, multi-byte values are stored in network order (big endian): most significant byte is stored first (at the lowest numbered byte). For example, if we identify the payload length by its most significant and least significant byte, payload length = MSB LSB, then this will be stored as follows.
+\begin{verbatim}
+ 0   1 2   7 8  15 16  23 24   31
++=====+=====+=====+=============+
+| Val | unu | unu | MSB  | LSB  |
+|     | sed | sed |      |      |
++=====+=====+=====+=============+ 
+\end{verbatim}
+
+Assuming that the unused bits are zero, write the value of the header above in hexadecial format if Val is 3 and payload length is 0x214a.
+
+\item Suppose we change the header and denote bits 2-7 by X.
+\begin{verbatim}
+ 0   1 2   7 8  15 16  23 24   31
++=====+=====+=====+=============+
+| Val |  X  | unu | MSB  | LSB  |
+|     |     | sed |      |      |
++=====+=====+=====+=============+ 
+\end{verbatim}
+
+Provide the value of the header if Val is 2 (in decimal), X is 51 (in decimal), and payload length is 0x31af (in hexadecimal).
+\end{enumerate}
+
+
+\subsection{\ref{pl3.bit}}
+
+\begin{enumerate}[resume*]
+\item Consider the first byte in the header above. Suppose we want to assign  Val the value 2 while keeping the value of X unmodified. Describe a sequence of bitwise operations that achieves this. Recall that all bitwise operations involve byte values. For example, if $b_1 = 1000.0100$ and $b_2 = 0100.1100$ then the bitwise OR between $b_1$ and $b_2$ is $1100.1100$. What is the bitwise AND between $b_1$ and $b_2$?
+\begin{verbatim}
+ 0   1 2   7 
++=====+=====+
+| Val |  X  |
+|  2  |     |
++=====+=====+
+\end{verbatim}
+
+Hint: consider the bitwise OR between 2|0 and 0|X.
+
+\item Describe now the sequence of bitwise operations that sets the field X to some given value $\alpha$, without changing Val.
+
+\item Describe the sequence of bitwise operations that sets Val to some given value $\beta$ while leaving X unchanged.
+
+  Hint: shift $\beta$ to the left by 6 positions.
+  
+\end{enumerate}
+
+
+\subsection{\ref{pl3.byte}}
+
+\begin{enumerate}[resume*]
+\item Consider the 32 bit header below. View it as an array $b[]$ of 4 byte values. Describe a sequence of assignment operations that set the payoad length to the hexadecimal value 0x1234.
+ \begin{verbatim}
+ 0   1 2   7 8  15 16  23 24   31
++=====+=====+=====+=============+
+| Val |  X  | unu | MSB  | LSB  |
+|     |     | sed |      |      |
++=====+=====+=====+=============+ 
+\end{verbatim}
+
+ \item Suppose the payload length is represented by some value $\gamma$. Describe a sequence of operations using assignment and shifts to set the payload length to $\gamma$. 
+\end{enumerate}
+
+
+\subsection{\ref{pl3.head}}
+
+\begin{enumerate}[resume*]
+\item Download the header class implementation and the corresponding google tests from the file 2-header.zip on Moodle, under Lab resources / Project source files. Unpack the contents into a working directory.
+
+\item Examine the class header file and read the comments for each member function. 
+
+Answer the following questions about the code:
+\begin{enumerate}[label=(\alph*)]
+\item Which member function sets the \emph{Val} field of the header?
+\item What is the range of values for the \emph{Val} field?
+\item What is the documented behaviour for the setter of \emph{Val}? Does the function implement the documented behaviour?
+\end{enumerate}
+  
+\item Read the primer on Google tests, if you are not familiar with this framework.
+
+\item Examine the test code, and identify the functions that are tested.
+
+\item Build the test code using the Makefile provided. Are there any failed tests?
+
+\item Add a test case for the getter of field \emph{Val}. Check if the test passes and correct the code if necessary. Notice that your test should assign a value to the first byte in the header class based on your manual calculation of the field, then it should call the getter.
+
+\item Add a third test case that tests the behaviour of the setter of \emph{Val} when we attempt to set it to a value outside of its range. See that the test fails first, and then fix the code.
+\end{enumerate}
+
+
+\subsection{\ref{pl3.abs}}
+
+\begin{enumerate}[resume*]
+\item Revisit the lecture notes about the sliding window protocol with go-back-N. Examine the examples that describe the behaviour of the sender and the receiver as they react to various events. 
+
+\item On a sheet of paper, list the responsibilities you would assign to a class that manages the sequence numbers and the sliding window for the sender. Make another list for the class managing the responses of the receiver. As an example, a partial list for the sender is proposed below.
+
+  \begin{enumerate}[label=R\arabic*.]
+  \item Maintain the number of bits the sequence numbers are represented by.
+  \item Maintain the maximum size of the sliding window.
+  \item Maintain the current size of the sliding window.
+  \item Decide if a new sequence number can be assigned to a frame that can be transmitted for the first time (sliding window grows or moves to the right).
+  \item Processes acknowledged sequence numbers.
+  \item Etc.
+  \end{enumerate}
+
+\item Write header files for an abstract class (interface) for the sender sliding window and for the receiver sliding window. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by retransmission timers or by actually storing segments. Focus only on sequence numbers.
+
+  Example:
+  \begin{itemize}[label=--]
+  \item constructor(n): n represents the number of bits for sequence numbers.
+  \item canAddNew(): returns true if the sliding window can advance or expand to provide a new sequence number for an unconfirmed frame.
+  \item addNew(): returns the new sequence number that the sliding window can expand to or include. returns -1 if a new sequence number annot be provided.
+  \item setWinSize(n): sets the max size of the sliding window to n.
+  \item acknowledge(s): an acknowledgement for sequence s is received.
+  \item nrSeqInWin(): returns the number of unacknowledged sequences in the sliding window.
+  \item Etc.
+  \end{itemize}
+\end{enumerate}
+
+
+\subsection{\ref{pl3.test}}
+
+\begin{enumerate}[resume*]
+\item Using the class definition you created in the previous section, define acceptance tests to document the behaviour of your member functions. An example is provided below. As you develop your acceptance tests, feel free to change your interfaces, if necessary.
+
+  Examples:
+  \begin{itemize}[label=--]
+  \item For setWinSize:
+    \begin{itemize}
+    \item setWinSize(0)
+      \item canAddNew() should return false
+    \end{itemize}
+  \item for addNew:
+    \begin{itemize}
+    \item setWinSize(2);
+    \item addNew() should return 0
+    \item addNew() should return 1
+    \item addNew() should return -1
+    \item nrSeqInWin() should return 2
+    \item acknowledge(1)
+    \item nrSeqInWin() should return 0.
+    \end{itemize}
+    \item Etc.
+  \end{itemize}
+\end{enumerate}
+
+
+\subsection{\ref{pl3.impl}}\label{sec.impl}
+
+\begin{enumerate}[resume*]
+\item\label{act.impl} Implement the concrete sliding window classes for the receiver and the sender. Implement the acceptance tests using Google tests. 
+\end{enumerate}
+
+
+\section{Exercises}
+
+\begin{enumerate}[label=\arabic*.]
+\item Consider the following header map, taken for the header you need to implement for your project:
+\begin{verbatim}
+ 01 2 3 7 8     15 16     23 24    31
++--+-+---+--------+---------+--------+
+|Ty|T|Win|  Seq   |      Length      |
+|pe|R|dow|  num   |                  |
++--+-+---+--------+---------+--------+
+|        Timestamp (4 bytes)         |
+|                                    |
++------------------------------------+
+|           CRC1 (4 bytes)           |
+|                                    |
++------------------------------------+
+|                                    |
+|                                    |
++                                    +
+.       Payload (max 512 bytes)      .
+.                                    .
+.                                    .
++------------------------------------+
+|     CRC2 (4 bytes, optional)       |
+|                                    |
++------------------------------------+
+\end{verbatim}
+
+Implement a concrete class that manages the fields from the first 32 bits of this header: Type, TR, Window, Seq num, and Length. Implement setter and getter functions for these fields and test their correctness using Google tests.
+
+You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
+
+\item Complete Activity \ref{act.impl} from Section \ref{sec.impl}.
+\end{enumerate}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 \bibliographystyle{plain} \bibliography{labman}
