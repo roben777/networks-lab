@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.0.2}  %   Use current date. 
+\date{\today\\ version 3.1.0}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -101,7 +101,7 @@ This manual documents the lab work for course CPSC 3780 Data Communications and 
 
 \section{Preparing to run \kathara\ at home}\label{intro.se}
 
-The laboratory experiences in this document use a network emulator called \kathara available at \url{kathara.org}. \kathara is installed in CS labs at the univesity. You may choose to install \kathara\ on your own computer and you can complete the exercises at home, if you wish. \kathara\ is cross platform, although you need a Pro version for the Windows operating system since \kathara\ uses \emph{Docker} (\url{https://www.docker.com/}).
+The laboratory experiences in this document use a network emulator called \kathara available at \url{kathara.org}. \kathara is installed in CS labs at the university. You may choose to install \kathara\ on your own computer and you can complete the exercises at home, if you wish. \kathara\ is cross platform, although you need a Pro version for the Windows operating system since \kathara\ uses \emph{Docker} (\url{https://www.docker.com/}).
 
 \subsection{Installing and configuring \emph{\kathara} at home}
 
@@ -125,7 +125,7 @@ This section applies only if you wish to install \kathara\ at home. In the CS la
 
 \item Visit \url{https://www.kathara.org/} and follow the instructions to install \kathara\ for your operating system \cite{kathara-wiki}.
 
-\item A GUI for creating lab configuration files is available from \url{https://gitlab.com/FedericoYusteenappar/Kathara/-/tree/master}. The GUI is just a more convenient tool to create or alter lab configurations. I tis not needed to run \kathara.
+\item A GUI for creating lab configuration files is available from \url{https://gitlab.com/FedericoYusteenappar/Kathara/-/tree/master}. The GUI is just a more convenient tool to create or alter lab configurations. It is not needed to run \kathara.
   
 \end{enumerate}
 
@@ -139,10 +139,10 @@ This section applies only if you wish to install \kathara\ at home. In the CS la
 
 \subsection{Objectives}
 
-In this lab, students will learn some basic commands and configuration options to get them started with \kathara. No networks are simulated yet. Some basic familiarity with linux shell commands is assumed. Students without experience with shell commands will learn during this lab.
+In this lab, students will learn some basic commands and configuration options to get them started with \kathara. No networks are simulated yet. Some basic familiarity with Linux shell commands is assumed. Students without experience with shell commands will learn during this lab.
 
 \begin{enumerate}[label=Objective \arabic*]
-  \item\label{vstart} Students will start a single device (docker container) with \kathara\ and will execute unix commands including \emph{ifconfig} and \emph{ping}. This tests if their \kathara\ environment is correctly setup.
+  \item\label{vstart} Students will start a single device (docker container) with \kathara\ and will execute Unix commands including \emph{ifconfig} and \emph{ping}. This tests if their \kathara\ environment is correctly setup.
   \item\label{config} Students will adjust the configuration of their \kathara\ system by changing configuration files.
   \item\label{hosthome} Students will transfer information between their virtual device and the host machine. Students will create files on their virtual devices that can be visible on their host machine, and vice-versa.
   \item\label{image} Students will start and stop the execution of devices using different docker images for \kathara.
@@ -241,7 +241,7 @@ rtt min/avg/max/mdev = 0.019/0.048/0.067/0.022 ms
 root@pc:/# 
 \end{lstlisting}
 
-\item What inet (IPv4) address is asssociated with the local host? How about the inet6 (IPv6) address for the local host? Hint: examine the output of the \emph{ifconfig} command. Run \emph{ping} with these addresses instead of the \emph{localhost} name.
+\item What inet (IPv4) address is associated with the local host? How about the inet6 (IPv6) address for the local host? Hint: examine the output of the \emph{ifconfig} command. Run \emph{ping} with these addresses instead of the \emph{localhost} name.
 
   Note that IPv6 is not initially enabled on the virtual devices. To enable IPv6, you will need to edit kathara's configuration file on the host machine. This step is described shortly. Come back to this step after you enable IPv6 and start a new virtual machine.
 
@@ -272,7 +272,7 @@ Deploying devices... |##########################################################
 \end{lstlisting}
 %$
 
-\item Go to \url{https://hub.docker.com} and search for images that contain the keywork \emph{kathara}. Start another virtual device using a different image from \emph{quagga} and \emph{base}. Then list your running devices with \emph{kathara list}.
+\item Go to \url{https://hub.docker.com} and search for images that contain the keyword \emph{kathara}. Start another virtual device using a different image from \emph{quagga} and \emph{base}. Then list your running devices with \emph{kathara list}.
 
   Note: in the CS lab, the \emph{list} command cannot be carried out because of permissions. You are encouraged to install \kathara\ on your own computer and experiment with the list command as well as docker command.
 
@@ -320,7 +320,7 @@ TIMESTAMP: 2021-09-04 17:02:43.932187
 \subsection{Lab activities: \ref{hosthome}}
 
 \begin{enumerate}[resume*]
-\item One important feature of the network emulator is the ability of transfering information (for example network capture files) between the virtual devices and the host computer. On any virtual device, if the \kathara\ configuration option \verb$hosthome_mount$ is enabled, the host computer home directory is accessible to the virtual device via the directory \verb$/hosthome$ on the virtual device.
+\item One important feature of the network emulator is the ability of transferring information (for example network capture files) between the virtual devices and the host computer. On any virtual device, if the \kathara\ configuration option \verb$hosthome_mount$ is enabled, the host computer home directory is accessible to the virtual device via the directory \verb$/hosthome$ on the virtual device.
 
   \begin{itemize}[label=--]
   \item Create a working folder in your home directory \textbf{on the host computer} named \emph{work1}.
@@ -404,7 +404,7 @@ Students will write a C++ program that starts several threads. The program will 
 \begin{enumerate}[label=Objective \arabic*]
 \item\label{thread.start} Using the C++ STL, students will write code that starts threads of execution.
 % \item\label{thread.sleep} Students will write code that can wait (sleep) for a given period of time.
-\item\label{mutex} Students will use a mutex object to exclude concurent execution of portions of the code in a multi-threaded environment.
+\item\label{mutex} Students will use a mutex object to exclude concurrent execution of portions of the code in a multi-threaded environment.
 \item\label{lock.guard} Students will control the mutex through a \lstinline$lock_guard$ object that guarantees a safe lock/unlock mechanism.
 \end{enumerate}
 
@@ -562,7 +562,7 @@ Students will write a C++ program that starts several threads. The program will 
 
 \subsection{Objectives}
 
-Students will start their first local network and will capture and analyse several network packets. 
+Students will start their first local network and will capture and analyze several network packets. 
 
 \begin{enumerate}[label=Objective \arabic*]
 
@@ -635,7 +635,7 @@ Deleting collision domains... |#################################################
 \subsection{Target: \ref{ipv4.2}}\label{ipv4.2.se}
   
 \begin{enumerate}[resume*]
-\item The \emph{ifconfig} command is used to configure the network interface. Another commad that can be used is \emph{ip}. Invoke the manual (on the host machine) to read the documentation, if needed. Configure IPv4 address 10.0.0.1/24 on interface \emph{eth0} for device pc1, running \emph{ifconfig} as shown below.
+\item The \emph{ifconfig} command is used to configure the network interface. Another command that can be used is \emph{ip}. Invoke the manual (on the host machine) to read the documentation, if needed. Configure IPv4 address 10.0.0.1/24 on interface \emph{eth0} for device pc1, running \emph{ifconfig} as shown below.
 
   \begin{tabular}{r l}
     \toprule
@@ -696,7 +696,7 @@ rtt min/avg/max/mdev = 0.078/0.110/0.123/0.020 ms
 \item We can examine the packets sent and received by \emph{ping} if we capture them using command \emph{tcpdump}:
 \begin{enumerate}
 \item Start the capture program \emph{tcpdump} on pc2.
-\item Run \emph{ping} once more from pc1. Make sure you save the captured packets in a file in subdirectory \emph{/shared} on the virtual device. Files in folder \emph{/shared} on a virtual device are mapped to a folder named \emph{shared} in the lab folder on the host computer.
+\item Run \emph{ping} once more from pc1. Make sure you save the captured packets in a file in sub-directory \emph{/shared} on the virtual device. Files in folder \emph{/shared} on a virtual device are mapped to a folder named \emph{shared} in the lab folder on the host computer.
 \item Interrupt the \emph{tcpdump} program on pc2 by pressing CTRL-C.
 \end{enumerate}
   More information about \emph{tcpdump} is found in the manual pages \emph{man tcpdump} and several online articles \cite{tcpdump,tcpdump2}.
@@ -765,7 +765,7 @@ lab.conf  pc1/  pc1.startup  pc2/  pc2.startup  shared/
 
   Modify \emph{lab.conf} and add a third host named \emph{pc3} connected to the same collision domain as \emph{pc1} and \emph{pc2}. Also edit the lab metadata, such as title, author, etc.
 
-\item Edit the startup files for \emph{pc1} and \emph{pc2} and add the \emph{ifconfig} command that assigns the appropriate IPv4 addresses to the two hosts. The correct command is already present, in commented form. Uncommend the command. Add the configuration file for \emph{pc3} and assign address 10.0.0.3/24 to \emph{pc3}.
+\item Edit the startup files for \emph{pc1} and \emph{pc2} and add the \emph{ifconfig} command that assigns the appropriate IPv4 addresses to the two hosts. The correct command is already present, in commented form. Uncomment the command. Add the configuration file for \emph{pc3} and assign address 10.0.0.3/24 to \emph{pc3}.
 
 \item Start the new lab. Test if \emph{pc3} is connected to the network. Debug and adjust the lab files if necessary.
 
@@ -780,7 +780,7 @@ lab.conf  pc1/  pc1.startup  pc2/  pc2.startup  shared/
 
 \item Run \emph{ping6} from \emph{pc3} to query the connectivity to \emph{pc1}. What is the correct argument to the command?
 
-\item Assign the global IPv6 address 2100::1/64 to \emph{pc1}. Use command \emph{ifconfig} but provide \emph{inet6} as the address family. Note that IPv6 addresses can be added to an interface, but the command must specify the option \emph{add} folowed by the address. Similarly, IPv6 addresses can be deleted from an interface. See the man pages \emph{man ifconfig}.
+\item Assign the global IPv6 address 2100::1/64 to \emph{pc1}. Use command \emph{ifconfig} but provide \emph{inet6} as the address family. Note that IPv6 addresses can be added to an interface, but the command must specify the option \emph{add} followed by the address. Similarly, IPv6 addresses can be deleted from an interface. See the man pages \emph{man ifconfig}.
 
   \begin{lstlisting}
 root@pc1:/# ifconfig eth0 inet6 add 2100::1/64
@@ -914,7 +914,7 @@ In the second part of the lab, students will design, implement, and test a class
 
 \begin{enumerate}[label=Objective \arabic*:]
 \item\label{unu.l2} Students will explore the signaling features of a condition variable object. Students will also compile and build simple programs using condition variables. 
-\item\label{doi.l2} Students will implement an expiration timer using condition variablea.
+\item\label{doi.l2} Students will implement an expiration timer using condition variables.
 \item\label{trei.l2} Students will design, implement, and test a class responsible for writing and reading the various fields of the header for the course transport protocol. The course transport protocol is the course project for CPSC 3780.
 \item\label{patru.l2} Students will use the \emph{Google test} framework (refer to CPSC 2720) to test their class.
 
@@ -975,23 +975,23 @@ After notify
   \begin{itemize}[label=--]
   \item Replace the wait function by \lstinline$wait_for$ in the sleeper thread. The sleeper should wait for 1 sec.
     
-  \item Test the return value from the wait function in the sleeper. If the return value equals \lstinline$std::cv_status::timeout$, then the timer expired before the sleeper was notified, otherwise the sleper was notified and resumed execution. Out a message from the sleeper thread to identify if the sleeper thread was notifies by the waker or if the timer for the wait expired.
+  \item Test the return value from the wait function in the sleeper. If the return value equals \lstinline$std::cv_status::timeout$, then the timer expired before the sleeper was notified, otherwise the sleeper was notified and resumed execution. Out a message from the sleeper thread to identify if the sleeper thread was notifies by the waker or if the timer for the wait expired.
 
   \item In the waker, change the initial wait time from 1 sec to a random value between 0 and 2 sec, so the waker notifies the sleeper after waiting for a randomly chosen period of time. Use the \lstinline$std::rand()$ function to generate a random value between 0 and 2000 milli sec. Use \lstinline$std::srand(std::time(NULL));$ to seed the random number generator.
   \end{itemize}
 
-  Compile the program and run it repeatedly. What do you notice? You shouild see that in approximately half of the runs, the sleeper timer expires. 
+  Compile the program and run it repeatedly. What do you notice? You should see that in approximately half of the runs, the sleeper timer expires. 
   
 \end{enumerate}
 
 \section{Exercises}
 
 \begin{enumerate}
-\item Starting from the waker/sleeper source code developped in Section \ref{wakesleep.se}, extend its functions so that the following features are available:
+\item Starting from the waker/sleeper source code developed in Section \ref{wakesleep.se}, extend its functions so that the following features are available:
   \begin{enumerate}[label=\alph*)]
   \item There are two sleeper threads.
   \item The waker can randomly choose to wake one of the sleeper threads or the other. The other thread's waiting period expires.
-  \item Output messages should clarify which operations are carried out by threads and by which threads. In particular, you should assign an ID to each of the sleeper threads, for exaample, by passing the ID as an argument to its function.
+  \item Output messages should clarify which operations are carried out by threads and by which threads. In particular, you should assign an ID to each of the sleeper threads, for example, by passing the ID as an argument to its function.
     \item Explain your approach in a short PDF report: are you using different condition variables? Are you using the same condition variable? Justify your choices. 
   \end{enumerate}
 \end{enumerate}
@@ -1332,7 +1332,7 @@ In this lab, the students will start to develop code for setting and extracting 
 You can work on the following activities in groups, if you wish.
 
 \begin{enumerate}[label=Activity \arabic*:]
-\item Most networkig layers add information to the packets they handle. This information is usually added at the begining of a packet and is stored in binary form, to minimize the length of the packet.
+\item Most networking layers add information to the packets they handle. This information is usually added at the beginning of a packet and is stored in binary form, to minimize the length of the packet.
 
   The structure of the information is represented by a \emph{header map}, a representation that lists the location of various numerical values in a table like format. Columns in this format may identify bits fields. For example, an array of 3 byte values can be shown as follows.
 
@@ -1378,7 +1378,7 @@ On a sheet of paper, sketch an updated header map that consists of the Val and p
 +=====+=====+=====+=============+ 
 \end{verbatim}
 
-Assuming that the unused bits are zero, write the value of the header above in hexadecial format if Val is 3 and payload length is 0x214a.
+Assuming that the unused bits are zero, write the value of the header above in hexadecimal format if Val is 3 and payload length is 0x214a.
 
 \item Suppose we change the header and denote bits 2-7 by X.
 \begin{verbatim}
@@ -1419,7 +1419,7 @@ Hint: consider the bitwise OR between 2|0 and 0|X.
 \subsection{\ref{pl3.byte}}
 
 \begin{enumerate}[resume*]
-\item Consider the 32 bit header below. View it as an array $b[]$ of 4 byte values. Describe a sequence of assignment operations that set the payoad length to the hexadecimal value 0x1234.
+\item Consider the 32 bit header below. View it as an array $b[]$ of 4 byte values. Describe a sequence of assignment operations that set the payload length to the hexadecimal value 0x1234.
  \begin{verbatim}
  0   1 2   7 8  15 16  23 24   31
 +=====+=====+=====+=============+
@@ -1474,15 +1474,15 @@ Answer the following questions about the code:
   \item Etc.
   \end{enumerate}
 
-\item Write header files for an abstract class (interface) for the sender sliding window and for the receiver sliding window. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by retransmission timers or by actually storing segments. Focus only on sequence numbers.
+\item Write header files for an abstract class (interface) for the sender sliding window and for the receiver sliding window. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by re-transmission timers or by actually storing segments. Focus only on sequence numbers.
 
   Example:
   \begin{itemize}[label=--]
   \item constructor(n): n represents the number of bits for sequence numbers.
   \item canAddNew(): returns true if the sliding window can advance or expand to provide a new sequence number for an unconfirmed frame.
-  \item addNew(): returns the new sequence number that the sliding window can expand to or include. returns -1 if a new sequence number annot be provided.
+  \item addNew(): advances or expands the sliding window by one position, if possible. It returns the new sequence number that the sliding window expanded or advanced to. It returns -1 if the sliding window cannot incorporate a new sequence number (because it is at the maximum size already, for example).
   \item setWinSize(n): sets the max size of the sliding window to n.
-  \item acknowledge(s): an acknowledgement for sequence s is received.
+  \item acknowledge(s): an acknowledgment for sequence s is received. The number of unacknowledged sequences inside the window may reduce as a result of this function.
   \item nrSeqInWin(): returns the number of unacknowledged sequences in the sliding window.
   \item Etc.
   \end{itemize}
@@ -1505,8 +1505,17 @@ Answer the following questions about the code:
     \begin{itemize}
     \item setWinSize(2);
     \item addNew() should return 0
+    \item nrSeqInWin() should return 1
     \item addNew() should return 1
     \item addNew() should return -1
+    \item nrSeqInWin() should return 2
+    \end{itemize}
+  \item for acknowledge:
+    \begin{itemize}
+    \item setWinSize(2);
+    \item addNew() should return 0
+    \item nrSeqInWin() should return 1
+    \item addNew() should return 1
     \item nrSeqInWin() should return 2
     \item acknowledge(1)
     \item nrSeqInWin() should return 0.
