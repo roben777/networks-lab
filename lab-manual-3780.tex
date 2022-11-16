@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.1.1}  %   Use current date. 
+\date{\today\\ version 3.2.1}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -1565,6 +1565,286 @@ Implement a concrete class that manages the fields from the first 32 bits of thi
 You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
 
 \item Complete Activity \ref{act.impl} from Section \ref{sec.impl}. Implement the behaviour corresponding to the \textbf{selective repeat sliding window protocol}. Can you design your class so that you use the same interface you created for the go-back-N sliding window protocol during the lab activities? 
+\end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%
+
+\chapter{Project Lab 4: sending and receiving network packets using sockets}
+
+In this lab, the students will send and receive packets of data, from a C++ or C program, to another program or application.
+
+\section{Objectives}
+
+\begin{enumerate}[label=Objective \arabic*]
+\item\label{pl4.nc} Students will use netcat for simple communication, using UDP, between two hosts.
+\item\label{pl4.send} Students will write simple C++ code to \textbf{send} a data packet using the UDP protocol to a netcat application.
+  \item\label{pl4.recv} Students will adapt the sending code so that it \emph{receives} one data packet via UDP.
+\end{enumerate}
+
+
+\section{Lab activities}
+
+\subsection{\ref{pl4.nc}}
+
+For these activities, the students will write C++ code to send one short packet through the network. The packet will be received with program \emph{netcat}. 
+
+\begin{enumerate}[label=Activity \arabic*:]
+\item Netcat is a simple program that allows one to send and receive UDP packets. Recall that there are two protocols at the transport layer that we can use for the Internet: TCP (stream oriented, reliable), and UDP (datagram oriented, unreliable). We will work with UDP only for the project, but feel free to read about connecting via TCP from \emph{Beej's Guide to Network Programming} \cite{hall2009beej}.
+
+  We will first use netcat to send and receive a message.
+
+  Usage: \verb$nc [options] [dest_host] [dest_port] $. For complete documentation, run \verb$man nc$.
+
+  \begin{tabular}{l p{11cm}}
+    \toprule
+    nc option & Notes \\
+    \midrule
+    -l & Tell netcat to listen for incoming packets or connections \\
+    -u & Use UDP protocol \\
+    -p 9999 & Open local port 9999 \\
+    dest\_host & Destination host where we are sending data to \\
+    dest\_port & Destination port number where we are sending the data to \\
+    \bottomrule
+  \end{tabular}
+
+  Open two terminal applications. Remote login with \verb$ssh$ to \emph{student0.cs.uleth.ca} on one of the terminals.
+
+\item On the terminal for \emph{student0}, start netcat and instruct it to listen for incoming packets. Tell netcat to open the local port 2000 (any other number larger than 1024 is fine too). Always use UDP.
+
+  \begin{lstlisting}
+~$ hostname
+17lancer
+~$ nc -l -u -p 2000   
+  \end{lstlisting}
+
+\item On the terminal for the local host, start netcat and instruct it to direct all messages to the host \emph{student0} on port 2000. Use UDP!
+
+  \begin{lstlisting}
+~$ nc -u student0 2000
+  \end{lstlisting}
+
+\item Type a message on the local host terminal and press enter. What do you notice? The message should be displayed on the destination terminal window.
+
+  \begin{lstlisting}
+~$ nc -u student0 2000
+Hello world!
+  \end{lstlisting}
+
+\item Type a message in the terminal opened on \emph{student0}. Does the message arrive on the terminal for the local host?
+
+  Answer: yes, it should arrive. The sockets opened by netcat are used for receiving AND sending datagrams.
+  
+  \item Type CTRL-C to end netcat on both terminals.
+
+\end{enumerate}
+
+
+\subsection{\ref{pl4.send}}
+
+We send a packet via UDP from a C/C++ program using two steps:
+\begin{itemize}[label=--]
+\item We open a \emph{socket}, which is a resource descriptor for a network communication endpoint.
+  \item We call function \emph{sendto} to send a message, for example a string, to a destination, via the socket we just opened.
+\end{itemize}
+Details for the functions described below are available from Beej's Guide to Network Programming at \url{https://beej.us/guide/bgnet/html/split/}.
+
+\begin{enumerate}[resume*]
+\item We can open a socket descriptor using function \emph{socket}. The descriptor is an integer, just like a file descriptor is an integer. The function returns -1 on error. A socket descriptor is always positive.
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int socket(int domain, int type, int protocol);
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    domain & What kind of socket do we want? IPv4 (use \verb$PF_INET$) or IPv6 (use \verb$PF_INET6$)? \\
+    type & What type of socket do we want? Using datagrams (use \verb$SOCK_DGRAM$) or using byte streams (use \verb$SOCK_STREAM$)? \\
+    protocol & Use $0$. The protocol is automatically selected based on type: UDP for datagrams, TCP for streams.\\
+    \bottomrule
+  \end{tabular}
+
+Write a C++ program that opens and then closes a socket that uses IPv4 and UDP. To close a socket, use function close(). The function returns -1 on error.
+
+\begin{lstlisting}
+#include <unistd.h>
+
+int close(int s);
+\end{lstlisting}
+
+\begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    s & The socket descriptor to close\\
+    \bottomrule
+\end{tabular}
+
+
+\item Compile and execute this program (download from Project source files / 3-socket / 1-sopen.cc on Moodle). Make sure you test if the socket is correctly open and display an error message in case the socket was not opened. Below is a short example. Change the values of the arguments to the \emph{socket} function to arbitrary integers and check if the socket fails to open or not.
+
+\lstinputlisting{src/3-socket/1-sopen.cc}  
+
+\item We want to send a message through the newly created socket. Function \emph{sendto} can be used with UDP. Examine the manual for function \emph{sendto} or inspect Beej's Guide.
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+
+ssize_t send(int s, const void *buf, size_t len, int flags);
+ssize_t sendto(int s, const void *buf, size_t len,
+               int flags, const struct sockaddr *to,
+               socklen_t tolen);   
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    s & Socket to send \\
+    buf & Pointer to the data to send \\
+    len & Number of bytes of the data \\
+    flags & Use 0 for normal send; use MSG\_NOSIGNAL to prevent that signal SIGPIPE be raised if the receiver is not receiving\\
+    to & the destination IP address. This is the tricky part. The type is \emph{struct socaddr*}. How to set it? \\
+    tolen & Length of the \emph{to} address\\
+    \bottomrule
+  \end{tabular}
+
+\item We can use function \emph{getaddrinfo} to obtain the destination host address. Note that field \emph{ai\_addr} contains exactly what we need for sendto. Examine the documentation for function \emph{getaddrinfo}. Getaddrinfo returns 0 on success, non-zero on error.
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+int getaddrinfo(const char *nodename, const char *servname,
+                const struct addrinfo *hints, struct addrinfo **res);
+
+void freeaddrinfo(struct addrinfo *ai);
+
+const char *gai_strerror(int ecode);
+
+struct addrinfo {
+  int     ai_flags;          // AI_PASSIVE, AI_CANONNAME, ...
+  int     ai_family;         // AF_xxx
+  int     ai_socktype;       // SOCK_xxx
+  int     ai_protocol;       // 0 (auto) or IPPROTO_TCP, IPPROTO_UDP 
+
+  socklen_t  ai_addrlen;     // length of ai_addr
+  char   *ai_canonname;      // canonical name for nodename
+  struct sockaddr  *ai_addr; // binary address
+  struct addrinfo  *ai_next; // next structure in linked list
+};    
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\ \midrule
+    nodename & String for the host we are enquiring; the string can be a host name or an IP address \\
+    servname & String for the port number or server name such as ``http'' which matches port $80$ \\
+    hints & This is an input parameter. Set the fields of the structure to focus the query on specific domains. See below \\
+    \verb$hints->ai_flags$ & \verb$AI_PASSIVE$: return the address of the local host; in this case nodename can be NULL \\
+    \verb$hints->ai_family$ & \verb$AF_INET$ for IPv4 address; \verb$AF_INET6$ for IPv6 address; \verb$AF_UNSPEC$ for both IPv4 and IPv6 \\
+    \verb$hints->ai_socktype$ & \verb$SOCK_STREAM$ or \verb$SOCK_DGRAM$ \\
+    \verb$hints->ai_protocol$ & Use $0$ \\
+    res & output variable; points to the begining of a linked list containing information about the addresses associated with \emph{nodename} \\
+    \verb$res->ai_next$ & Points to the next element in the resulting linked list; typically we should traverse the list trying to open a socket using the data from the \verb$ai_family, ai_type, ai_protocol$ fields from the result. If we succeed, we are done traversing; if we fail, we try with the next entry\\
+    \bottomrule
+  \end{tabular}
+
+
+\item Now that we have the destination address in a suitable format, we can send a hello message. The function \emph{sendto} returns -1 on error, or the number of bytes actually sent, which can be different from the original number of bytes requested to be sent. We should be careful to test the return value.
+
+  The code containing setting up the destination address and port can be examined below (available as file 2-send.cc on Moodle).
+
+  \lstinputlisting{src/3-socket/2-send.cc}
+  
+\end{enumerate}
+
+
+\subsection{\ref{pl4.recv}}
+
+\begin{enumerate}[resume*]
+\item Now that we are able to send a packet to a netcap application, we can replace the receiving netcat application with our own program. Examine the documentation for function \emph{recvfrom} using the manual pages or Beej's guide. The return value is the same as for send().
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+
+ssize_t recv(int s, void *buf, size_t len, int flags);
+ssize_t recvfrom(int s, void *buf, size_t len, int flags,
+                 struct sockaddr *from, socklen_t *fromlen);  
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    flags & Use 0 for plain receive \\
+    from & Address from where the packet was received \\
+    fromlen & The length of the address (it could be IPv6 or 4)\\
+    \multicolumn{2}{l}{All other arguments are the same as for send()} \\
+    \bottomrule
+  \end{tabular}
+  
+\item In order to receive the packet, however, we need to know at which port the socket should be bound to, since we are sending the packet to a particular port. Assigning a socket to an IP address and port is called \emph{binding}. For the sender, the binding was done automatically: the socket was bound to the local IP address and an \emph{ephemeral} port number. To receive, we need to know (and thus we need to choose) the port number the application receives on.
+
+  We can call the \emph{bind} function for this. Examine the documentation for the bind function.
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int bind(int sockfd, struct sockaddr *my_addr, socklen_t addrlen);    
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Argument & Description \\ \midrule
+    sockfd & the socket we try to bind \\
+    \verb$my_addr$ & address and port number we want to bind to; use \emph{getaddrinfo} with the \verb$AI_PASSIVE$ flag in the hints argument (with a NULL pointer for the host name) to get the address of the local host \\
+    \bottomrule
+  \end{tabular}
+
+\item Copy the source code for the sending program and change the code so that you bind the socket to a known port number. For this, you will need to adjust some parameters in the \emph{getaddrinfo} function so that you extract the address of the local host and supply the port number you choose to receive from.
+
+\item Bind the socket to the address returned by \emph{getaddrinfo}, Adjust the code so that you can receive one data packet with \emph{recvfrom}. The following lines of code might be helpful. Check also Beej's guide.
+
+  \lstinputlisting[firstline=50]{src/3-socket/3-recv.cc}
+
+\end{enumerate}
+
+  
+
+\section{Exercises}
+
+\begin{enumerate}[label=\arabic*.]
+\item Adjust the sender and receiver programs you developed during the activities so that the receiver immediately bounces back to the sender the message it receives. Change the code so that the sender reads the message from the input.
+
+  More precisely, the receiver must figure out the source address and port number for the message it receives and it must send it back from where it came. Both applications must print on the console the message received.
+
+  Sample execution log is provided below. Note that 3000 is the port number and receiver\_address should be replaced by the host name or IP address of the computer running the receiver.
+
+\begin{verbatim}
+The receiver terminal window:
+$ receiver 3000
+Received: Hello.
+$
+\end{verbatim}
+
+\begin{verbatim}
+The sender terminal window:
+$ sender receiver_address 3000
+Enter a message: Hello.
+Received: Hello.
+$
+\end{verbatim}
+
 \end{enumerate}
 
 
