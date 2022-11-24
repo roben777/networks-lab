@@ -59,6 +59,8 @@ int main(int argc, char *argv[]) {
   struct sockaddr_storage fromaddr;
   char buf[512];
 
+  // initialize fromlen. It is an input/output parameter
+  fromlen = sizeof(fromaddr);
   byte_count = recvfrom(sock, buf, sizeof(buf)-1, 0, (sockaddr*)(&fromaddr), &fromlen);
   // we assume we receive a string, not a binary packet, so make it null string just in case
   buf[byte_count]=0;

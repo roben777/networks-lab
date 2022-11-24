@@ -1787,7 +1787,7 @@ ssize_t recvfrom(int s, void *buf, size_t len, int flags,
     \midrule
     flags & Use 0 for plain receive \\
     from & Address from where the packet was received \\
-    fromlen & The length of the address (it could be IPv6 or 4)\\
+    fromlen & The length of the address (it could be IPv6 or 4); initialize this parameter to the length of the data structure pointed to by parameter \emph{from}\\
     \multicolumn{2}{l}{All other arguments are the same as for send()} \\
     \bottomrule
   \end{tabular}
