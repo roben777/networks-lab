@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.2.1}  %   Use current date. 
+\date{\today\\ version 3.3.0}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -96,10 +96,20 @@
 
 \chapter{Introduction}
 
-This manual documents the lab work for course CPSC 3780 Data Communications and Networking at the University of Lethbridge. The lab sessions introduce the students to some of the network management tools currently used in practice. It provide hands-on experience with some basic tasks in network management, using a networking emulation package called \kathara. New to this version is the addition of a network programming component to the lab activities, which will support students with their project activities.
+This manual documents the lab work for course CPSC 3780 Data Communications and Networking at the University of Lethbridge. There are two types of lab activities described in this manual. The first, introduces network programming techniques. The second, teaches basic network management tools that will help with understanding some of the network protocols.
+
+Network programming follows a slightly different model from the typical sequential programming paradigm so familiar to C++ programmers, and thus the lab sessions in Part \ref{cpp.part} introduce some
+%%%% CONTINUA AICI %%%%
+
+The lab sessions introduce the students to some of the network management tools currently used in practice. It provide hands-on experience with some basic tasks in network management, using a networking emulation package called \kathara.
+
+\part{Network programming}\label{cpp.part}
 
 
-\section{Preparing to run \kathara\ at home}\label{intro.se}
+\part{Network tools and protocols}\label{kathara.part}
+
+
+\chapter{Prerequisites, installing \kathara\ on your own devices}\label{intro.se}
 
 The laboratory experiences in this document use a network emulator called \kathara available at \url{kathara.org}. \kathara is installed in CS labs at the university. You may choose to install \kathara\ on your own computer and you can complete the exercises at home, if you wish. \kathara\ is cross platform, although you need a Pro version for the Windows operating system since \kathara\ uses \emph{Docker} (\url{https://www.docker.com/}).
 
