@@ -273,8 +273,647 @@ Students will write a C++ program that starts several threads. The program will 
   \end{enumerate}
 
 
+%%%%%%%%%%%%%%%%%
+\chapter{Lab N2: timers}
+
+In this lab, students will use STL classes to implement the timer functionality needed when programming the typical action-confirmation network protocol behaviour. In this scenario, a process performs an action such as sending a data packet to a peer process, and then it waits to receive a confirmation from the peer process. The confirmation may or may not arrive. If the confirmation arrives, the sending process should resume execution right away. If the confirmation does not arrive, the sending process should resume execution after a maximum wait time (the timer value). The sending process must be able to distinguish the two cases - confirmation received or timer expired. We can implement this behaviour with a \emph{condition variable} object from the STL.
+
+In the second part of the lab, students will design, implement, and test a class whose responsibilities are to manipulate the fields of a packet header.
+
+\section{Objectives}
+
+\begin{enumerate}[label=Objective \arabic*:]
+\item\label{unu.l2} Students will explore the signaling features of a condition variable object. Students will also compile and build simple programs using condition variables. 
+\item\label{doi.l2} Students will implement an expiration timer using condition variables.
+\item\label{trei.l2} Students will design, implement, and test a class responsible for writing and reading the various fields of the header for the course transport protocol. The course transport protocol is the course project for CPSC 3780.
+\item\label{patru.l2} Students will use the \emph{Google test} framework (refer to CPSC 2720) to test their class.
+
+\end{enumerate}
+
+\subsection{Summary of classes}
+
+\begin{tabularx}{\textwidth}{r  X}
+  Classes & Description \\ \midrule
+  \lstinline$std::condition_variable$ & class with various process signaling responsibilities; see \url{https://cplusplus.com/reference/condition_variable/condition_variable/} \\
+  \lstinline$std::mutex$ & blocks threads  when trying to lock a mutex more than once\\
+  \lstinline$std::unique_lock$ & manages a mutex and implements a more complex locking and unlocking protocol \\
+  \lstinline$wait_for$ & member function of condition variable; uses a \lstinline$unique_lock$ to wait for a given period of time or until notified through the condition variable, whichever occurs first
+\end{tabularx}
 
 
+\subsection{Lab activities: \ref{unu.l2}}
+
+A condition variable can be used by threads to signal each other. We can explore these features next.
+
+\begin{enumerate}[label=Activity \arabic*:]
+
+\item\label{pa2.unu} A condition variable can be constructed using the default constructor. Since condition variables are used for signaling, important  member functions are the \emph{notify} functions. 
+
+  Write a program that constructs a condition variable and then notifies the condition variable.
+
+  \lstinputlisting{src/2-timers/2-notify.cc}
+
+\item Compile and execute the program:
+
+  \begin{lstlisting}
+$ g++ -o 2-notify -lpthread 2-notify.cc 
+$ ./2-notify 
+Before notify
+After notify
+  \end{lstlisting}
+
+  What do you notice? A condition variable can only be constructed using the default constructor. We can then invoke the notify functions, but nothing interesting happens because there is no other thread using the condition variable.
+
+\item Modify the code from \ref{pa2.unu} to create two threads that use the same condition variable.
+
+  \lstinputlisting{src/2-timers/2-threads.cc}
+
+  Compile and run the program several times. What do you notice? Nothing interesting, the threads that call \emph{notify} repeatedly on the condition variable don't seem to be affected by the condition variable.
+
+\item In order for some interaction to happen between threads, one of the threads should \emph{wait} and block on the condition variable. The wait functions require a lock on a mutex to be able to wait.
+
+  Write a program with two threads. One thread, the sleeper, waits on the condition variable. The other notifies the condition variable after a delay of 1 sec. Compile, run, and check that the sleeper thread wakes up.
+
+  \lstinputlisting{src/2-timers/2-sleeper.cc}
+\end{enumerate}
+
+\subsection{Lab activities: \ref{doi.l2}}\label{wakesleep.se}
+
+
+\begin{enumerate}[resume*]  
+\item Extend the program above so that the sleeper thread uses the \lstinline$wait_for$ function on the condition variable. Perform the following changes to the source code:
+  \begin{itemize}[label=--]
+  \item Replace the wait function by \lstinline$wait_for$ in the sleeper thread. The sleeper should wait for 1 sec.
+    
+  \item Test the return value from the wait function in the sleeper. If the return value equals \lstinline$std::cv_status::timeout$, then the timer expired before the sleeper was notified, otherwise the sleeper was notified and resumed execution. Out a message from the sleeper thread to identify if the sleeper thread was notifies by the waker or if the timer for the wait expired.
+
+  \item In the waker, change the initial wait time from 1 sec to a random value between 0 and 2 sec, so the waker notifies the sleeper after waiting for a randomly chosen period of time. Use the \lstinline$std::rand()$ function to generate a random value between 0 and 2000 milli sec. Use \lstinline$std::srand(std::time(NULL));$ to seed the random number generator.
+  \end{itemize}
+
+  Compile the program and run it repeatedly. What do you notice? You should see that in approximately half of the runs, the sleeper timer expires. 
+  
+\end{enumerate}
+
+\section{Exercises}
+
+\begin{enumerate}
+\item Starting from the waker/sleeper source code developed in Section \ref{wakesleep.se}, extend its functions so that the following features are available:
+  \begin{enumerate}[label=\alph*)]
+  \item There are two sleeper threads.
+  \item The waker can randomly choose to wake one of the sleeper threads or the other. The other thread's waiting period expires.
+  \item Output messages should clarify which operations are carried out by threads and by which threads. In particular, you should assign an ID to each of the sleeper threads, for example, by passing the ID as an argument to its function.
+    \item Explain your approach in a short PDF report: are you using different condition variables? Are you using the same condition variable? Justify your choices. 
+  \end{enumerate}
+\end{enumerate}
+
+
+
+
+%%%%%%%%%%%%%%%%%
+\chapter{Lab N3: packet headers, sliding windows}
+
+In this lab, the students will start to develop code for setting and extracting information from binary packet headers. The students will also develop and test the logic for manipulating sequence numbers and sliding windows. Google unit tests will be very useful to test these important project components, and, if students are familiar with test driven development, they can be also used for development.
+
+\section{Objectives}
+
+\begin{enumerate}[label=Objective \arabic*]
+  \item\label{pl3.maps} Students will read and create bit header maps for various headers. 
+\item\label{pl3.bit} Students will use shift and bit-wise operations to set and get bit fields that are smaller than 8 bits.
+\item\label{pl3.byte} Students will use shift, bit-wise, and array access operations to manipulate numerical fields that are multiples of 8 bits, stored in big-endian or network byte order.
+\item\label{pl3.head} Students will modify a C++ class that manipulates header fields. Students will use Google tests to test this header management class.
+\item\label{pl3.abs} Students will define, on paper, abstract classes for the sliding window protocol for the sender and the receiver.
+\item\label{pl3.test} Students will document the behaviour of the sliding window methods using \emph{acceptance tests}.
+  \item\label{pl3.impl} Students will implement concrete classes for the sender and receiver sliding window module; students will write Google tests for their acceptance tests.
+\end{enumerate}
+
+\subsection{Resources}
+
+\begin{itemize}[label=--]
+\item Bit-wise and shift operators in C++: \url{https://www.geeksforgeeks.org/bitwise-operators-in-c-cpp/}
+\item Google test primer: \url{https://google.github.io/googletest/primer.html}
+\item Learning TDD with katas (optional): \url{https://social.technet.microsoft.com/wiki/contents/articles/30940.learning-test-driven-development-with-tdd-katas.aspx}
+\end{itemize}
+
+
+\section{Lab activities}
+
+\subsection{\ref{pl3.maps}}
+
+You can work on the following activities in groups, if you wish.
+
+\begin{enumerate}[label=Activity \arabic*:]
+\item Most networking layers add information to the packets they handle. This information is usually added at the beginning of a packet and is stored in binary form, to minimize the length of the packet.
+
+  The structure of the information is represented by a \emph{header map}, a representation that lists the location of various numerical values in a table like format. Columns in this format may identify bits fields. For example, an array of 3 byte values can be shown as follows.
+
+\begin{verbatim}
+  0        7
+ +----------+
+ |  1st val |
+ +----------+
+ |  2nd val |
+ +----------+
+ |  3rd val |
+ +----------+
+\end{verbatim}
+
+An array of two 16 bit numerical values can be shown as follows.
+\begin{verbatim}
+  0               15
+ +-----------------+
+ |  1st 16 bit val |
+ +-----------------+
+ |  2nd 16 bit val |
+ +-----------------+
+\end{verbatim}
+
+A header containing fields of different sizes: the field \emph{Val} is a 2 bit value stored as the most two significant bits of the first byte in the header; the \emph{payload} is a 16 bit value stored starting with the 16-th bit in the structure.
+\begin{verbatim}
+ 0   1 2   7 8  15 16     31
++=====+=====+=====+=========+
+| Val | unu | unu | payload |
+|     | sed | sed | length  |
++=====+=====+=====+=========+ 
+\end{verbatim}
+
+On a sheet of paper, sketch an updated header map that consists of the Val and payload length fields above + two other 16 bit values, labeled A and B.
+
+
+\item In the diagrams, small bit indices correspond to the most significant bits in a byte. Similarly, multi-byte values are stored in network order (big endian): most significant byte is stored first (at the lowest numbered byte). For example, if we identify the payload length by its most significant and least significant byte, payload length = MSB LSB, then this will be stored as follows.
+\begin{verbatim}
+ 0   1 2   7 8  15 16  23 24   31
++=====+=====+=====+=============+
+| Val | unu | unu | MSB  | LSB  |
+|     | sed | sed |      |      |
++=====+=====+=====+=============+ 
+\end{verbatim}
+
+Assuming that the unused bits are zero, write the value of the header above in hexadecimal format if Val is 3 and payload length is 0x214a.
+
+\item Suppose we change the header and denote bits 2-7 by X.
+\begin{verbatim}
+ 0   1 2   7 8  15 16  23 24   31
++=====+=====+=====+=============+
+| Val |  X  | unu | MSB  | LSB  |
+|     |     | sed |      |      |
++=====+=====+=====+=============+ 
+\end{verbatim}
+
+Provide the value of the header if Val is 2 (in decimal), X is 51 (in decimal), and payload length is 0x31af (in hexadecimal).
+\end{enumerate}
+
+
+\subsection{\ref{pl3.bit}}
+
+\begin{enumerate}[resume*]
+\item Consider the first byte in the header above. Suppose we want to assign  Val the value 2 while keeping the value of X unmodified. Describe a sequence of bitwise operations that achieves this. Recall that all bitwise operations involve byte values. For example, if $b_1 = 1000.0100$ and $b_2 = 0100.1100$ then the bitwise OR between $b_1$ and $b_2$ is $1100.1100$. What is the bitwise AND between $b_1$ and $b_2$?
+\begin{verbatim}
+ 0   1 2   7 
++=====+=====+
+| Val |  X  |
+|  2  |     |
++=====+=====+
+\end{verbatim}
+
+Hint: consider the bitwise OR between 2|0 and 0|X.
+
+\item Describe now the sequence of bitwise operations that sets the field X to some given value $\alpha$, without changing Val.
+
+\item Describe the sequence of bitwise operations that sets Val to some given value $\beta$ while leaving X unchanged.
+
+  Hint: shift $\beta$ to the left by 6 positions.
+  
+\end{enumerate}
+
+
+\subsection{\ref{pl3.byte}}
+
+\begin{enumerate}[resume*]
+\item Consider the 32 bit header below. View it as an array $b[]$ of 4 byte values. Describe a sequence of assignment operations that set the payload length to the hexadecimal value 0x1234.
+ \begin{verbatim}
+ 0   1 2   7 8  15 16  23 24   31
++=====+=====+=====+=============+
+| Val |  X  | unu | MSB  | LSB  |
+|     |     | sed |      |      |
++=====+=====+=====+=============+ 
+\end{verbatim}
+
+ \item Suppose the payload length is represented by some value $\gamma$. Describe a sequence of operations using assignment and shifts to set the payload length to $\gamma$. 
+\end{enumerate}
+
+
+\subsection{\ref{pl3.head}}
+
+\begin{enumerate}[resume*]
+\item Download the header class implementation and the corresponding google tests from the file 2-header.zip on Moodle, under Lab resources / Project source files. Unpack the contents into a working directory.
+
+\item Examine the class header file and read the comments for each member function. 
+
+Answer the following questions about the code:
+\begin{enumerate}[label=(\alph*)]
+\item Which member function sets the \emph{Val} field of the header?
+\item What is the range of values for the \emph{Val} field?
+\item What is the documented behaviour for the setter of \emph{Val}? Does the function implement the documented behaviour?
+\end{enumerate}
+  
+\item Read the primer on Google tests, if you are not familiar with this framework.
+
+\item Examine the test code, and identify the functions that are tested.
+
+\item Build the test code using the Makefile provided. Are there any failed tests?
+
+\item Add a test case for the getter of field \emph{Val}. Check if the test passes and correct the code if necessary. Notice that your test should assign a value to the first byte in the header class based on your manual calculation of the field, then it should call the getter.
+
+\item Add a third test case that tests the behaviour of the setter of \emph{Val} when we attempt to set it to a value outside of its range. See that the test fails first, and then fix the code.
+\end{enumerate}
+
+
+\subsection{\ref{pl3.abs}}
+
+\begin{enumerate}[resume*]
+\item Revisit the lecture notes about the sliding window protocol with go-back-N. Examine the examples that describe the behaviour of the sender and the receiver as they react to various events. 
+
+\item On a sheet of paper, list the responsibilities you would assign to a class that manages the sequence numbers and the sliding window for the sender. Make another list for the class managing the responses of the receiver. As an example, a partial list for the sender is proposed below.
+
+  \begin{enumerate}[label=R\arabic*.]
+  \item Maintain the number of bits the sequence numbers are represented by.
+  \item Maintain the maximum size of the sliding window.
+  \item Maintain the current size of the sliding window.
+  \item Decide if a new sequence number can be assigned to a frame that can be transmitted for the first time (sliding window grows or moves to the right).
+  \item Processes acknowledged sequence numbers.
+  \item Etc.
+  \end{enumerate}
+
+\item Write header files for an abstract class (interface) for the sender sliding window and for the receiver sliding window. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by re-transmission timers or by actually storing segments. Focus only on sequence numbers.
+
+  Example:
+  \begin{itemize}[label=--]
+  \item constructor(n): n represents the number of bits for sequence numbers.
+  \item canAddNew(): returns true if the sliding window can advance or expand to provide a new sequence number for an unconfirmed frame.
+  \item addNew(): advances or expands the sliding window by one position, if possible. It returns the new sequence number that the sliding window expanded or advanced to. It returns -1 if the sliding window cannot incorporate a new sequence number (because it is at the maximum size already, for example).
+  \item setWinSize(n): sets the max size of the sliding window to n.
+  \item acknowledge(s): an acknowledgment for sequence s is received. The number of unacknowledged sequences inside the window may reduce as a result of this function.
+  \item nrSeqInWin(): returns the number of unacknowledged sequences in the sliding window.
+  \item Etc.
+  \end{itemize}
+\end{enumerate}
+
+
+\subsection{\ref{pl3.test}}
+
+\begin{enumerate}[resume*]
+\item Using the class definition you created in the previous section, define acceptance tests to document the behaviour of your member functions. An example is provided below. As you develop your acceptance tests, feel free to change your interfaces, if necessary.
+
+  Examples:
+  \begin{itemize}[label=--]
+  \item For setWinSize:
+    \begin{itemize}
+    \item setWinSize(0)
+      \item canAddNew() should return false
+    \end{itemize}
+  \item for addNew:
+    \begin{itemize}
+    \item setWinSize(2);
+    \item addNew() should return 0
+    \item nrSeqInWin() should return 1
+    \item addNew() should return 1
+    \item addNew() should return -1
+    \item nrSeqInWin() should return 2
+    \end{itemize}
+  \item for acknowledge:
+    \begin{itemize}
+    \item setWinSize(2);
+    \item addNew() should return 0
+    \item nrSeqInWin() should return 1
+    \item addNew() should return 1
+    \item nrSeqInWin() should return 2
+    \item acknowledge(1)
+    \item nrSeqInWin() should return 0.
+    \end{itemize}
+    \item Etc.
+  \end{itemize}
+\end{enumerate}
+
+
+\subsection{\ref{pl3.impl}}\label{sec.impl}
+
+\begin{enumerate}[resume*]
+\item\label{act.impl} Implement the concrete sliding window classes for the receiver and the sender. Implement the acceptance tests using Google tests. 
+\end{enumerate}
+
+
+\section{Exercises}
+
+\begin{enumerate}[label=\arabic*.]
+\item Consider the following header map, taken for the header you need to implement for your project:
+\begin{verbatim}
+ 01 2 3 7 8     15 16     23 24    31
++--+-+---+--------+---------+--------+
+|Ty|T|Win|  Seq   |      Length      |
+|pe|R|dow|  num   |                  |
++--+-+---+--------+---------+--------+
+|        Timestamp (4 bytes)         |
+|                                    |
++------------------------------------+
+|           CRC1 (4 bytes)           |
+|                                    |
++------------------------------------+
+|                                    |
+|                                    |
++                                    +
+.       Payload (max 512 bytes)      .
+.                                    .
+.                                    .
++------------------------------------+
+|     CRC2 (4 bytes, optional)       |
+|                                    |
++------------------------------------+
+\end{verbatim}
+
+Implement a concrete class that manages the fields from the first 32 bits of this header: Type, TR, Window, Seq num, and Length. Implement setter and getter functions for these fields and test their correctness using Google tests.
+
+You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
+
+\item Complete Activity \ref{act.impl} from Section \ref{sec.impl}. Implement the behaviour corresponding to the \textbf{selective repeat sliding window protocol}. Can you design your class so that you use the same interface you created for the go-back-N sliding window protocol during the lab activities? 
+\end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%
+
+\chapter{Lab N4: sending and receiving network packets using sockets}
+
+In this lab, the students will send and receive packets of data, from a C++ or C program, to another program or application.
+
+\section{Objectives}
+
+\begin{enumerate}[label=Objective \arabic*]
+\item\label{pl4.nc} Students will use netcat for simple communication, using UDP, between two hosts.
+\item\label{pl4.send} Students will write simple C++ code to \textbf{send} a data packet using the UDP protocol to a netcat application.
+  \item\label{pl4.recv} Students will adapt the sending code so that it \emph{receives} one data packet via UDP.
+\end{enumerate}
+
+
+\section{Lab activities}
+
+\subsection{\ref{pl4.nc}}
+
+For these activities, the students will write C++ code to send one short packet through the network. The packet will be received with program \emph{netcat}. 
+
+\begin{enumerate}[label=Activity \arabic*:]
+\item Netcat is a simple program that allows one to send and receive UDP packets. Recall that there are two protocols at the transport layer that we can use for the Internet: TCP (stream oriented, reliable), and UDP (datagram oriented, unreliable). We will work with UDP only for the project, but feel free to read about connecting via TCP from \emph{Beej's Guide to Network Programming} \cite{hall2009beej}.
+
+  We will first use netcat to send and receive a message.
+
+  Usage: \verb$nc [options] [dest_host] [dest_port] $. For complete documentation, run \verb$man nc$.
+
+  \begin{tabular}{l p{11cm}}
+    \toprule
+    nc option & Notes \\
+    \midrule
+    -l & Tell netcat to listen for incoming packets or connections \\
+    -u & Use UDP protocol \\
+    -p 9999 & Open local port 9999 \\
+    dest\_host & Destination host where we are sending data to \\
+    dest\_port & Destination port number where we are sending the data to \\
+    \bottomrule
+  \end{tabular}
+
+  Open two terminal applications. Remote login with \verb$ssh$ to \emph{student0.cs.uleth.ca} on one of the terminals.
+
+\item On the terminal for \emph{student0}, start netcat and instruct it to listen for incoming packets. Tell netcat to open the local port 2000 (any other number larger than 1024 is fine too). Always use UDP.
+
+  \begin{lstlisting}
+~$ hostname
+17lancer
+~$ nc -l -u -p 2000   
+  \end{lstlisting}
+
+\item On the terminal for the local host, start netcat and instruct it to direct all messages to the host \emph{student0} on port 2000. Use UDP!
+
+  \begin{lstlisting}
+~$ nc -u student0 2000
+  \end{lstlisting}
+
+\item Type a message on the local host terminal and press enter. What do you notice? The message should be displayed on the destination terminal window.
+
+  \begin{lstlisting}
+~$ nc -u student0 2000
+Hello world!
+  \end{lstlisting}
+
+\item Type a message in the terminal opened on \emph{student0}. Does the message arrive on the terminal for the local host?
+
+  Answer: yes, it should arrive. The sockets opened by netcat are used for receiving AND sending datagrams.
+  
+  \item Type CTRL-C to end netcat on both terminals.
+
+\end{enumerate}
+
+
+\subsection{\ref{pl4.send}}
+
+We send a packet via UDP from a C/C++ program using two steps:
+\begin{itemize}[label=--]
+\item We open a \emph{socket}, which is a resource descriptor for a network communication endpoint.
+  \item We call function \emph{sendto} to send a message, for example a string, to a destination, via the socket we just opened.
+\end{itemize}
+Details for the functions described below are available from Beej's Guide to Network Programming at \url{https://beej.us/guide/bgnet/html/split/}.
+
+\begin{enumerate}[resume*]
+\item We can open a socket descriptor using function \emph{socket}. The descriptor is an integer, just like a file descriptor is an integer. The function returns -1 on error. A socket descriptor is always positive.
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int socket(int domain, int type, int protocol);
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    domain & What kind of socket do we want? IPv4 (use \verb$PF_INET$) or IPv6 (use \verb$PF_INET6$)? \\
+    type & What type of socket do we want? Using datagrams (use \verb$SOCK_DGRAM$) or using byte streams (use \verb$SOCK_STREAM$)? \\
+    protocol & Use $0$. The protocol is automatically selected based on type: UDP for datagrams, TCP for streams.\\
+    \bottomrule
+  \end{tabular}
+
+Write a C++ program that opens and then closes a socket that uses IPv4 and UDP. To close a socket, use function close(). The function returns -1 on error.
+
+\begin{lstlisting}
+#include <unistd.h>
+
+int close(int s);
+\end{lstlisting}
+
+\begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    s & The socket descriptor to close\\
+    \bottomrule
+\end{tabular}
+
+
+\item Compile and execute this program (download from Project source files / 3-socket / 1-sopen.cc on Moodle). Make sure you test if the socket is correctly open and display an error message in case the socket was not opened. Below is a short example. Change the values of the arguments to the \emph{socket} function to arbitrary integers and check if the socket fails to open or not.
+
+\lstinputlisting{src/3-socket/1-sopen.cc}  
+
+\item We want to send a message through the newly created socket. Function \emph{sendto} can be used with UDP. Examine the manual for function \emph{sendto} or inspect Beej's Guide.
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+
+ssize_t send(int s, const void *buf, size_t len, int flags);
+ssize_t sendto(int s, const void *buf, size_t len,
+               int flags, const struct sockaddr *to,
+               socklen_t tolen);   
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    s & Socket to send \\
+    buf & Pointer to the data to send \\
+    len & Number of bytes of the data \\
+    flags & Use 0 for normal send; use MSG\_NOSIGNAL to prevent that signal SIGPIPE be raised if the receiver is not receiving\\
+    to & the destination IP address. This is the tricky part. The type is \emph{struct socaddr*}. How to set it? \\
+    tolen & Length of the \emph{to} address\\
+    \bottomrule
+  \end{tabular}
+
+\item We can use function \emph{getaddrinfo} to obtain the destination host address. Note that field \emph{ai\_addr} contains exactly what we need for sendto. Examine the documentation for function \emph{getaddrinfo}. Getaddrinfo returns 0 on success, non-zero on error.
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
+int getaddrinfo(const char *nodename, const char *servname,
+                const struct addrinfo *hints, struct addrinfo **res);
+
+void freeaddrinfo(struct addrinfo *ai);
+
+const char *gai_strerror(int ecode);
+
+struct addrinfo {
+  int     ai_flags;          // AI_PASSIVE, AI_CANONNAME, ...
+  int     ai_family;         // AF_xxx
+  int     ai_socktype;       // SOCK_xxx
+  int     ai_protocol;       // 0 (auto) or IPPROTO_TCP, IPPROTO_UDP 
+
+  socklen_t  ai_addrlen;     // length of ai_addr
+  char   *ai_canonname;      // canonical name for nodename
+  struct sockaddr  *ai_addr; // binary address
+  struct addrinfo  *ai_next; // next structure in linked list
+};    
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\ \midrule
+    nodename & String for the host we are enquiring; the string can be a host name or an IP address \\
+    servname & String for the port number or server name such as ``http'' which matches port $80$ \\
+    hints & This is an input parameter. Set the fields of the structure to focus the query on specific domains. See below \\
+    \verb$hints->ai_flags$ & \verb$AI_PASSIVE$: return the address of the local host; in this case nodename can be NULL \\
+    \verb$hints->ai_family$ & \verb$AF_INET$ for IPv4 address; \verb$AF_INET6$ for IPv6 address; \verb$AF_UNSPEC$ for both IPv4 and IPv6 \\
+    \verb$hints->ai_socktype$ & \verb$SOCK_STREAM$ or \verb$SOCK_DGRAM$ \\
+    \verb$hints->ai_protocol$ & Use $0$ \\
+    res & output variable; points to the begining of a linked list containing information about the addresses associated with \emph{nodename} \\
+    \verb$res->ai_next$ & Points to the next element in the resulting linked list; typically we should traverse the list trying to open a socket using the data from the \verb$ai_family, ai_type, ai_protocol$ fields from the result. If we succeed, we are done traversing; if we fail, we try with the next entry\\
+    \bottomrule
+  \end{tabular}
+
+
+\item Now that we have the destination address in a suitable format, we can send a hello message. The function \emph{sendto} returns -1 on error, or the number of bytes actually sent, which can be different from the original number of bytes requested to be sent. We should be careful to test the return value.
+
+  The code containing setting up the destination address and port can be examined below (available as file 2-send.cc on Moodle).
+
+  \lstinputlisting{src/3-socket/2-send.cc}
+  
+\end{enumerate}
+
+
+\subsection{\ref{pl4.recv}}
+
+\begin{enumerate}[resume*]
+\item Now that we are able to send a packet to a netcat application, we can replace the receiving netcat application with our own program. Examine the documentation for function \emph{recvfrom} using the manual pages or Beej's guide. The return value is the same as for send().
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+
+ssize_t recv(int s, void *buf, size_t len, int flags);
+ssize_t recvfrom(int s, void *buf, size_t len, int flags,
+                 struct sockaddr *from, socklen_t *fromlen);  
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    flags & Use 0 for plain receive \\
+    from & Address from where the packet was received \\
+    fromlen & The length of the address (it could be IPv6 or 4); initialize this parameter to the length of the data structure pointed to by parameter \emph{from}\\
+    \multicolumn{2}{l}{All other arguments are the same as for send()} \\
+    \bottomrule
+  \end{tabular}
+  
+\item In order to receive the packet, however, we need to know at which port the socket should be bound to, since we are sending the packet to a particular port. Assigning a socket to an IP address and port is called \emph{binding}. For the sender, the binding was done automatically: the socket was bound to the local IP address and an \emph{ephemeral} port number. To receive, we need to know (and thus we need to choose) the port number the application receives on.
+
+  We can call the \emph{bind} function for this. Examine the documentation for the bind function.
+
+  \begin{lstlisting}
+#include <sys/types.h>
+#include <sys/socket.h>
+
+int bind(int sockfd, struct sockaddr *my_addr, socklen_t addrlen);    
+  \end{lstlisting}
+
+  \begin{tabular}{l p{10cm}}
+    \toprule
+    Argument & Description \\ \midrule
+    sockfd & the socket we try to bind \\
+    \verb$my_addr$ & address and port number we want to bind to; use \emph{getaddrinfo} with the \verb$AI_PASSIVE$ flag in the hints argument (with a NULL pointer for the host name) to get the address of the local host \\
+    \bottomrule
+  \end{tabular}
+
+\item Copy the source code for the sending program and change the code so that you bind the socket to a known port number. For this, you will need to adjust some parameters in the \emph{getaddrinfo} function so that you extract the address of the local host and supply the port number you choose to receive from.
+
+\item Bind the socket to the address returned by \emph{getaddrinfo}, Adjust the code so that you can receive one data packet with \emph{recvfrom}. The following lines of code might be helpful. Check also Beej's guide.
+
+  \lstinputlisting[firstline=50]{src/3-socket/3-recv.cc}
+
+\end{enumerate}
+
+  
+
+\section{Exercises}
+
+\begin{enumerate}[label=\arabic*.]
+\item Adjust the sender and receiver programs you developed during the activities so that the receiver immediately bounces back to the sender the message it receives. Change the code so that the sender reads the message from the input.
+
+  More precisely, the receiver must figure out the source address and port number for the message it receives and it must send it back from where it came. Both applications must print on the console the message received.
+
+  Sample execution log is provided below. Note that 3000 is the port number and receiver\_address should be replaced by the host name or IP address of the computer running the receiver.
+
+\begin{verbatim}
+The receiver terminal window:
+$ receiver 3000
+Received: Hello.
+$
+\end{verbatim}
+
+\begin{verbatim}
+The sender terminal window:
+$ sender receiver_address 3000
+Enter a message: Hello.
+Received: Hello.
+$
+\end{verbatim}
 
 
 
@@ -924,99 +1563,6 @@ The neighbours table for IPv6 can be examined and manipulated with command \emph
 \end{enumerate}
 
 
-%%%%%%%%%%%%%%%%%
-\chapter{Project lab 2: timers}
-
-In this lab, students will use STL classes to implement the timer functionality needed when programming the typical action-confirmation network protocol behaviour. In this scenario, a process performs an action such as sending a data packet to a peer process, and then it waits to receive a confirmation from the peer process. The confirmation may or may not arrive. If the confirmation arrives, the sending process should resume execution right away. If the confirmation does not arrive, the sending process should resume execution after a maximum wait time (the timer value). The sending process must be able to distinguish the two cases - confirmation received or timer expired. We can implement this behaviour with a \emph{condition variable} object from the STL.
-
-In the second part of the lab, students will design, implement, and test a class whose responsibilities are to manipulate the fields of a packet header.
-
-\section{Objectives}
-
-\begin{enumerate}[label=Objective \arabic*:]
-\item\label{unu.l2} Students will explore the signaling features of a condition variable object. Students will also compile and build simple programs using condition variables. 
-\item\label{doi.l2} Students will implement an expiration timer using condition variables.
-\item\label{trei.l2} Students will design, implement, and test a class responsible for writing and reading the various fields of the header for the course transport protocol. The course transport protocol is the course project for CPSC 3780.
-\item\label{patru.l2} Students will use the \emph{Google test} framework (refer to CPSC 2720) to test their class.
-
-\end{enumerate}
-
-\subsection{Summary of classes}
-
-\begin{tabularx}{\textwidth}{r  X}
-  Classes & Description \\ \midrule
-  \lstinline$std::condition_variable$ & class with various process signaling responsibilities; see \url{https://cplusplus.com/reference/condition_variable/condition_variable/} \\
-  \lstinline$std::mutex$ & blocks threads  when trying to lock a mutex more than once\\
-  \lstinline$std::unique_lock$ & manages a mutex and implements a more complex locking and unlocking protocol \\
-  \lstinline$wait_for$ & member function of condition variable; uses a \lstinline$unique_lock$ to wait for a given period of time or until notified through the condition variable, whichever occurs first
-\end{tabularx}
-
-
-\subsection{Lab activities: \ref{unu.l2}}
-
-A condition variable can be used by threads to signal each other. We can explore these features next.
-
-\begin{enumerate}[label=Activity \arabic*:]
-
-\item\label{pa2.unu} A condition variable can be constructed using the default constructor. Since condition variables are used for signaling, important  member functions are the \emph{notify} functions. 
-
-  Write a program that constructs a condition variable and then notifies the condition variable.
-
-  \lstinputlisting{src/2-timers/2-notify.cc}
-
-\item Compile and execute the program:
-
-  \begin{lstlisting}
-$ g++ -o 2-notify -lpthread 2-notify.cc 
-$ ./2-notify 
-Before notify
-After notify
-  \end{lstlisting}
-
-  What do you notice? A condition variable can only be constructed using the default constructor. We can then invoke the notify functions, but nothing interesting happens because there is no other thread using the condition variable.
-
-\item Modify the code from \ref{pa2.unu} to create two threads that use the same condition variable.
-
-  \lstinputlisting{src/2-timers/2-threads.cc}
-
-  Compile and run the program several times. What do you notice? Nothing interesting, the threads that call \emph{notify} repeatedly on the condition variable don't seem to be affected by the condition variable.
-
-\item In order for some interaction to happen between threads, one of the threads should \emph{wait} and block on the condition variable. The wait functions require a lock on a mutex to be able to wait.
-
-  Write a program with two threads. One thread, the sleeper, waits on the condition variable. The other notifies the condition variable after a delay of 1 sec. Compile, run, and check that the sleeper thread wakes up.
-
-  \lstinputlisting{src/2-timers/2-sleeper.cc}
-\end{enumerate}
-
-\subsection{Lab activities: \ref{doi.l2}}\label{wakesleep.se}
-
-
-\begin{enumerate}[resume*]  
-\item Extend the program above so that the sleeper thread uses the \lstinline$wait_for$ function on the condition variable. Perform the following changes to the source code:
-  \begin{itemize}[label=--]
-  \item Replace the wait function by \lstinline$wait_for$ in the sleeper thread. The sleeper should wait for 1 sec.
-    
-  \item Test the return value from the wait function in the sleeper. If the return value equals \lstinline$std::cv_status::timeout$, then the timer expired before the sleeper was notified, otherwise the sleeper was notified and resumed execution. Out a message from the sleeper thread to identify if the sleeper thread was notifies by the waker or if the timer for the wait expired.
-
-  \item In the waker, change the initial wait time from 1 sec to a random value between 0 and 2 sec, so the waker notifies the sleeper after waiting for a randomly chosen period of time. Use the \lstinline$std::rand()$ function to generate a random value between 0 and 2000 milli sec. Use \lstinline$std::srand(std::time(NULL));$ to seed the random number generator.
-  \end{itemize}
-
-  Compile the program and run it repeatedly. What do you notice? You should see that in approximately half of the runs, the sleeper timer expires. 
-  
-\end{enumerate}
-
-\section{Exercises}
-
-\begin{enumerate}
-\item Starting from the waker/sleeper source code developed in Section \ref{wakesleep.se}, extend its functions so that the following features are available:
-  \begin{enumerate}[label=\alph*)]
-  \item There are two sleeper threads.
-  \item The waker can randomly choose to wake one of the sleeper threads or the other. The other thread's waiting period expires.
-  \item Output messages should clarify which operations are carried out by threads and by which threads. In particular, you should assign an ID to each of the sleeper threads, for example, by passing the ID as an argument to its function.
-    \item Explain your approach in a short PDF report: are you using different condition variables? Are you using the same condition variable? Justify your choices. 
-  \end{enumerate}
-\end{enumerate}
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Lab 3: manual routing tables}
@@ -1319,552 +1865,6 @@ rtt min/avg/max/mdev = 0.095/0.101/0.110/0.010 ms
   \end{enumerate}
 \end{enumerate}
 
-
-%%%%%%%%%%%%%%%%%
-\chapter{Project lab 3: packet headers, sliding windows}
-
-In this lab, the students will start to develop code for setting and extracting information from binary packet headers. The students will also develop and test the logic for manipulating sequence numbers and sliding windows. Google unit tests will be very useful to test these important project components, and, if students are familiar with test driven development, they can be also used for development.
-
-\section{Objectives}
-
-\begin{enumerate}[label=Objective \arabic*]
-  \item\label{pl3.maps} Students will read and create bit header maps for various headers. 
-\item\label{pl3.bit} Students will use shift and bit-wise operations to set and get bit fields that are smaller than 8 bits.
-\item\label{pl3.byte} Students will use shift, bit-wise, and array access operations to manipulate numerical fields that are multiples of 8 bits, stored in big-endian or network byte order.
-\item\label{pl3.head} Students will modify a C++ class that manipulates header fields. Students will use Google tests to test this header management class.
-\item\label{pl3.abs} Students will define, on paper, abstract classes for the sliding window protocol for the sender and the receiver.
-\item\label{pl3.test} Students will document the behaviour of the sliding window methods using \emph{acceptance tests}.
-  \item\label{pl3.impl} Students will implement concrete classes for the sender and receiver sliding window module; students will write Google tests for their acceptance tests.
-\end{enumerate}
-
-\subsection{Resources}
-
-\begin{itemize}[label=--]
-\item Bit-wise and shift operators in C++: \url{https://www.geeksforgeeks.org/bitwise-operators-in-c-cpp/}
-\item Google test primer: \url{https://google.github.io/googletest/primer.html}
-\item Learning TDD with katas (optional): \url{https://social.technet.microsoft.com/wiki/contents/articles/30940.learning-test-driven-development-with-tdd-katas.aspx}
-\end{itemize}
-
-
-\section{Lab activities}
-
-\subsection{\ref{pl3.maps}}
-
-You can work on the following activities in groups, if you wish.
-
-\begin{enumerate}[label=Activity \arabic*:]
-\item Most networking layers add information to the packets they handle. This information is usually added at the beginning of a packet and is stored in binary form, to minimize the length of the packet.
-
-  The structure of the information is represented by a \emph{header map}, a representation that lists the location of various numerical values in a table like format. Columns in this format may identify bits fields. For example, an array of 3 byte values can be shown as follows.
-
-\begin{verbatim}
-  0        7
- +----------+
- |  1st val |
- +----------+
- |  2nd val |
- +----------+
- |  3rd val |
- +----------+
-\end{verbatim}
-
-An array of two 16 bit numerical values can be shown as follows.
-\begin{verbatim}
-  0               15
- +-----------------+
- |  1st 16 bit val |
- +-----------------+
- |  2nd 16 bit val |
- +-----------------+
-\end{verbatim}
-
-A header containing fields of different sizes: the field \emph{Val} is a 2 bit value stored as the most two significant bits of the first byte in the header; the \emph{payload} is a 16 bit value stored starting with the 16-th bit in the structure.
-\begin{verbatim}
- 0   1 2   7 8  15 16     31
-+=====+=====+=====+=========+
-| Val | unu | unu | payload |
-|     | sed | sed | length  |
-+=====+=====+=====+=========+ 
-\end{verbatim}
-
-On a sheet of paper, sketch an updated header map that consists of the Val and payload length fields above + two other 16 bit values, labeled A and B.
-
-
-\item In the diagrams, small bit indices correspond to the most significant bits in a byte. Similarly, multi-byte values are stored in network order (big endian): most significant byte is stored first (at the lowest numbered byte). For example, if we identify the payload length by its most significant and least significant byte, payload length = MSB LSB, then this will be stored as follows.
-\begin{verbatim}
- 0   1 2   7 8  15 16  23 24   31
-+=====+=====+=====+=============+
-| Val | unu | unu | MSB  | LSB  |
-|     | sed | sed |      |      |
-+=====+=====+=====+=============+ 
-\end{verbatim}
-
-Assuming that the unused bits are zero, write the value of the header above in hexadecimal format if Val is 3 and payload length is 0x214a.
-
-\item Suppose we change the header and denote bits 2-7 by X.
-\begin{verbatim}
- 0   1 2   7 8  15 16  23 24   31
-+=====+=====+=====+=============+
-| Val |  X  | unu | MSB  | LSB  |
-|     |     | sed |      |      |
-+=====+=====+=====+=============+ 
-\end{verbatim}
-
-Provide the value of the header if Val is 2 (in decimal), X is 51 (in decimal), and payload length is 0x31af (in hexadecimal).
-\end{enumerate}
-
-
-\subsection{\ref{pl3.bit}}
-
-\begin{enumerate}[resume*]
-\item Consider the first byte in the header above. Suppose we want to assign  Val the value 2 while keeping the value of X unmodified. Describe a sequence of bitwise operations that achieves this. Recall that all bitwise operations involve byte values. For example, if $b_1 = 1000.0100$ and $b_2 = 0100.1100$ then the bitwise OR between $b_1$ and $b_2$ is $1100.1100$. What is the bitwise AND between $b_1$ and $b_2$?
-\begin{verbatim}
- 0   1 2   7 
-+=====+=====+
-| Val |  X  |
-|  2  |     |
-+=====+=====+
-\end{verbatim}
-
-Hint: consider the bitwise OR between 2|0 and 0|X.
-
-\item Describe now the sequence of bitwise operations that sets the field X to some given value $\alpha$, without changing Val.
-
-\item Describe the sequence of bitwise operations that sets Val to some given value $\beta$ while leaving X unchanged.
-
-  Hint: shift $\beta$ to the left by 6 positions.
-  
-\end{enumerate}
-
-
-\subsection{\ref{pl3.byte}}
-
-\begin{enumerate}[resume*]
-\item Consider the 32 bit header below. View it as an array $b[]$ of 4 byte values. Describe a sequence of assignment operations that set the payload length to the hexadecimal value 0x1234.
- \begin{verbatim}
- 0   1 2   7 8  15 16  23 24   31
-+=====+=====+=====+=============+
-| Val |  X  | unu | MSB  | LSB  |
-|     |     | sed |      |      |
-+=====+=====+=====+=============+ 
-\end{verbatim}
-
- \item Suppose the payload length is represented by some value $\gamma$. Describe a sequence of operations using assignment and shifts to set the payload length to $\gamma$. 
-\end{enumerate}
-
-
-\subsection{\ref{pl3.head}}
-
-\begin{enumerate}[resume*]
-\item Download the header class implementation and the corresponding google tests from the file 2-header.zip on Moodle, under Lab resources / Project source files. Unpack the contents into a working directory.
-
-\item Examine the class header file and read the comments for each member function. 
-
-Answer the following questions about the code:
-\begin{enumerate}[label=(\alph*)]
-\item Which member function sets the \emph{Val} field of the header?
-\item What is the range of values for the \emph{Val} field?
-\item What is the documented behaviour for the setter of \emph{Val}? Does the function implement the documented behaviour?
-\end{enumerate}
-  
-\item Read the primer on Google tests, if you are not familiar with this framework.
-
-\item Examine the test code, and identify the functions that are tested.
-
-\item Build the test code using the Makefile provided. Are there any failed tests?
-
-\item Add a test case for the getter of field \emph{Val}. Check if the test passes and correct the code if necessary. Notice that your test should assign a value to the first byte in the header class based on your manual calculation of the field, then it should call the getter.
-
-\item Add a third test case that tests the behaviour of the setter of \emph{Val} when we attempt to set it to a value outside of its range. See that the test fails first, and then fix the code.
-\end{enumerate}
-
-
-\subsection{\ref{pl3.abs}}
-
-\begin{enumerate}[resume*]
-\item Revisit the lecture notes about the sliding window protocol with go-back-N. Examine the examples that describe the behaviour of the sender and the receiver as they react to various events. 
-
-\item On a sheet of paper, list the responsibilities you would assign to a class that manages the sequence numbers and the sliding window for the sender. Make another list for the class managing the responses of the receiver. As an example, a partial list for the sender is proposed below.
-
-  \begin{enumerate}[label=R\arabic*.]
-  \item Maintain the number of bits the sequence numbers are represented by.
-  \item Maintain the maximum size of the sliding window.
-  \item Maintain the current size of the sliding window.
-  \item Decide if a new sequence number can be assigned to a frame that can be transmitted for the first time (sliding window grows or moves to the right).
-  \item Processes acknowledged sequence numbers.
-  \item Etc.
-  \end{enumerate}
-
-\item Write header files for an abstract class (interface) for the sender sliding window and for the receiver sliding window. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by re-transmission timers or by actually storing segments. Focus only on sequence numbers.
-
-  Example:
-  \begin{itemize}[label=--]
-  \item constructor(n): n represents the number of bits for sequence numbers.
-  \item canAddNew(): returns true if the sliding window can advance or expand to provide a new sequence number for an unconfirmed frame.
-  \item addNew(): advances or expands the sliding window by one position, if possible. It returns the new sequence number that the sliding window expanded or advanced to. It returns -1 if the sliding window cannot incorporate a new sequence number (because it is at the maximum size already, for example).
-  \item setWinSize(n): sets the max size of the sliding window to n.
-  \item acknowledge(s): an acknowledgment for sequence s is received. The number of unacknowledged sequences inside the window may reduce as a result of this function.
-  \item nrSeqInWin(): returns the number of unacknowledged sequences in the sliding window.
-  \item Etc.
-  \end{itemize}
-\end{enumerate}
-
-
-\subsection{\ref{pl3.test}}
-
-\begin{enumerate}[resume*]
-\item Using the class definition you created in the previous section, define acceptance tests to document the behaviour of your member functions. An example is provided below. As you develop your acceptance tests, feel free to change your interfaces, if necessary.
-
-  Examples:
-  \begin{itemize}[label=--]
-  \item For setWinSize:
-    \begin{itemize}
-    \item setWinSize(0)
-      \item canAddNew() should return false
-    \end{itemize}
-  \item for addNew:
-    \begin{itemize}
-    \item setWinSize(2);
-    \item addNew() should return 0
-    \item nrSeqInWin() should return 1
-    \item addNew() should return 1
-    \item addNew() should return -1
-    \item nrSeqInWin() should return 2
-    \end{itemize}
-  \item for acknowledge:
-    \begin{itemize}
-    \item setWinSize(2);
-    \item addNew() should return 0
-    \item nrSeqInWin() should return 1
-    \item addNew() should return 1
-    \item nrSeqInWin() should return 2
-    \item acknowledge(1)
-    \item nrSeqInWin() should return 0.
-    \end{itemize}
-    \item Etc.
-  \end{itemize}
-\end{enumerate}
-
-
-\subsection{\ref{pl3.impl}}\label{sec.impl}
-
-\begin{enumerate}[resume*]
-\item\label{act.impl} Implement the concrete sliding window classes for the receiver and the sender. Implement the acceptance tests using Google tests. 
-\end{enumerate}
-
-
-\section{Exercises}
-
-\begin{enumerate}[label=\arabic*.]
-\item Consider the following header map, taken for the header you need to implement for your project:
-\begin{verbatim}
- 01 2 3 7 8     15 16     23 24    31
-+--+-+---+--------+---------+--------+
-|Ty|T|Win|  Seq   |      Length      |
-|pe|R|dow|  num   |                  |
-+--+-+---+--------+---------+--------+
-|        Timestamp (4 bytes)         |
-|                                    |
-+------------------------------------+
-|           CRC1 (4 bytes)           |
-|                                    |
-+------------------------------------+
-|                                    |
-|                                    |
-+                                    +
-.       Payload (max 512 bytes)      .
-.                                    .
-.                                    .
-+------------------------------------+
-|     CRC2 (4 bytes, optional)       |
-|                                    |
-+------------------------------------+
-\end{verbatim}
-
-Implement a concrete class that manages the fields from the first 32 bits of this header: Type, TR, Window, Seq num, and Length. Implement setter and getter functions for these fields and test their correctness using Google tests.
-
-You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
-
-\item Complete Activity \ref{act.impl} from Section \ref{sec.impl}. Implement the behaviour corresponding to the \textbf{selective repeat sliding window protocol}. Can you design your class so that you use the same interface you created for the go-back-N sliding window protocol during the lab activities? 
-\end{enumerate}
-
-
-%%%%%%%%%%%%%%%%%%%
-
-\chapter{Project Lab 4: sending and receiving network packets using sockets}
-
-In this lab, the students will send and receive packets of data, from a C++ or C program, to another program or application.
-
-\section{Objectives}
-
-\begin{enumerate}[label=Objective \arabic*]
-\item\label{pl4.nc} Students will use netcat for simple communication, using UDP, between two hosts.
-\item\label{pl4.send} Students will write simple C++ code to \textbf{send} a data packet using the UDP protocol to a netcat application.
-  \item\label{pl4.recv} Students will adapt the sending code so that it \emph{receives} one data packet via UDP.
-\end{enumerate}
-
-
-\section{Lab activities}
-
-\subsection{\ref{pl4.nc}}
-
-For these activities, the students will write C++ code to send one short packet through the network. The packet will be received with program \emph{netcat}. 
-
-\begin{enumerate}[label=Activity \arabic*:]
-\item Netcat is a simple program that allows one to send and receive UDP packets. Recall that there are two protocols at the transport layer that we can use for the Internet: TCP (stream oriented, reliable), and UDP (datagram oriented, unreliable). We will work with UDP only for the project, but feel free to read about connecting via TCP from \emph{Beej's Guide to Network Programming} \cite{hall2009beej}.
-
-  We will first use netcat to send and receive a message.
-
-  Usage: \verb$nc [options] [dest_host] [dest_port] $. For complete documentation, run \verb$man nc$.
-
-  \begin{tabular}{l p{11cm}}
-    \toprule
-    nc option & Notes \\
-    \midrule
-    -l & Tell netcat to listen for incoming packets or connections \\
-    -u & Use UDP protocol \\
-    -p 9999 & Open local port 9999 \\
-    dest\_host & Destination host where we are sending data to \\
-    dest\_port & Destination port number where we are sending the data to \\
-    \bottomrule
-  \end{tabular}
-
-  Open two terminal applications. Remote login with \verb$ssh$ to \emph{student0.cs.uleth.ca} on one of the terminals.
-
-\item On the terminal for \emph{student0}, start netcat and instruct it to listen for incoming packets. Tell netcat to open the local port 2000 (any other number larger than 1024 is fine too). Always use UDP.
-
-  \begin{lstlisting}
-~$ hostname
-17lancer
-~$ nc -l -u -p 2000   
-  \end{lstlisting}
-
-\item On the terminal for the local host, start netcat and instruct it to direct all messages to the host \emph{student0} on port 2000. Use UDP!
-
-  \begin{lstlisting}
-~$ nc -u student0 2000
-  \end{lstlisting}
-
-\item Type a message on the local host terminal and press enter. What do you notice? The message should be displayed on the destination terminal window.
-
-  \begin{lstlisting}
-~$ nc -u student0 2000
-Hello world!
-  \end{lstlisting}
-
-\item Type a message in the terminal opened on \emph{student0}. Does the message arrive on the terminal for the local host?
-
-  Answer: yes, it should arrive. The sockets opened by netcat are used for receiving AND sending datagrams.
-  
-  \item Type CTRL-C to end netcat on both terminals.
-
-\end{enumerate}
-
-
-\subsection{\ref{pl4.send}}
-
-We send a packet via UDP from a C/C++ program using two steps:
-\begin{itemize}[label=--]
-\item We open a \emph{socket}, which is a resource descriptor for a network communication endpoint.
-  \item We call function \emph{sendto} to send a message, for example a string, to a destination, via the socket we just opened.
-\end{itemize}
-Details for the functions described below are available from Beej's Guide to Network Programming at \url{https://beej.us/guide/bgnet/html/split/}.
-
-\begin{enumerate}[resume*]
-\item We can open a socket descriptor using function \emph{socket}. The descriptor is an integer, just like a file descriptor is an integer. The function returns -1 on error. A socket descriptor is always positive.
-
-  \begin{lstlisting}
-#include <sys/types.h>
-#include <sys/socket.h>
-
-int socket(int domain, int type, int protocol);
-  \end{lstlisting}
-
-  \begin{tabular}{l p{10cm}}
-    \toprule
-    Parameter & Description \\
-    \midrule
-    domain & What kind of socket do we want? IPv4 (use \verb$PF_INET$) or IPv6 (use \verb$PF_INET6$)? \\
-    type & What type of socket do we want? Using datagrams (use \verb$SOCK_DGRAM$) or using byte streams (use \verb$SOCK_STREAM$)? \\
-    protocol & Use $0$. The protocol is automatically selected based on type: UDP for datagrams, TCP for streams.\\
-    \bottomrule
-  \end{tabular}
-
-Write a C++ program that opens and then closes a socket that uses IPv4 and UDP. To close a socket, use function close(). The function returns -1 on error.
-
-\begin{lstlisting}
-#include <unistd.h>
-
-int close(int s);
-\end{lstlisting}
-
-\begin{tabular}{l p{10cm}}
-    \toprule
-    Parameter & Description \\
-    \midrule
-    s & The socket descriptor to close\\
-    \bottomrule
-\end{tabular}
-
-
-\item Compile and execute this program (download from Project source files / 3-socket / 1-sopen.cc on Moodle). Make sure you test if the socket is correctly open and display an error message in case the socket was not opened. Below is a short example. Change the values of the arguments to the \emph{socket} function to arbitrary integers and check if the socket fails to open or not.
-
-\lstinputlisting{src/3-socket/1-sopen.cc}  
-
-\item We want to send a message through the newly created socket. Function \emph{sendto} can be used with UDP. Examine the manual for function \emph{sendto} or inspect Beej's Guide.
-
-  \begin{lstlisting}
-#include <sys/types.h>
-#include <sys/socket.h>
-
-ssize_t send(int s, const void *buf, size_t len, int flags);
-ssize_t sendto(int s, const void *buf, size_t len,
-               int flags, const struct sockaddr *to,
-               socklen_t tolen);   
-  \end{lstlisting}
-
-  \begin{tabular}{l p{10cm}}
-    \toprule
-    Parameter & Description \\
-    \midrule
-    s & Socket to send \\
-    buf & Pointer to the data to send \\
-    len & Number of bytes of the data \\
-    flags & Use 0 for normal send; use MSG\_NOSIGNAL to prevent that signal SIGPIPE be raised if the receiver is not receiving\\
-    to & the destination IP address. This is the tricky part. The type is \emph{struct socaddr*}. How to set it? \\
-    tolen & Length of the \emph{to} address\\
-    \bottomrule
-  \end{tabular}
-
-\item We can use function \emph{getaddrinfo} to obtain the destination host address. Note that field \emph{ai\_addr} contains exactly what we need for sendto. Examine the documentation for function \emph{getaddrinfo}. Getaddrinfo returns 0 on success, non-zero on error.
-
-  \begin{lstlisting}
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
-int getaddrinfo(const char *nodename, const char *servname,
-                const struct addrinfo *hints, struct addrinfo **res);
-
-void freeaddrinfo(struct addrinfo *ai);
-
-const char *gai_strerror(int ecode);
-
-struct addrinfo {
-  int     ai_flags;          // AI_PASSIVE, AI_CANONNAME, ...
-  int     ai_family;         // AF_xxx
-  int     ai_socktype;       // SOCK_xxx
-  int     ai_protocol;       // 0 (auto) or IPPROTO_TCP, IPPROTO_UDP 
-
-  socklen_t  ai_addrlen;     // length of ai_addr
-  char   *ai_canonname;      // canonical name for nodename
-  struct sockaddr  *ai_addr; // binary address
-  struct addrinfo  *ai_next; // next structure in linked list
-};    
-  \end{lstlisting}
-
-  \begin{tabular}{l p{10cm}}
-    \toprule
-    Parameter & Description \\ \midrule
-    nodename & String for the host we are enquiring; the string can be a host name or an IP address \\
-    servname & String for the port number or server name such as ``http'' which matches port $80$ \\
-    hints & This is an input parameter. Set the fields of the structure to focus the query on specific domains. See below \\
-    \verb$hints->ai_flags$ & \verb$AI_PASSIVE$: return the address of the local host; in this case nodename can be NULL \\
-    \verb$hints->ai_family$ & \verb$AF_INET$ for IPv4 address; \verb$AF_INET6$ for IPv6 address; \verb$AF_UNSPEC$ for both IPv4 and IPv6 \\
-    \verb$hints->ai_socktype$ & \verb$SOCK_STREAM$ or \verb$SOCK_DGRAM$ \\
-    \verb$hints->ai_protocol$ & Use $0$ \\
-    res & output variable; points to the begining of a linked list containing information about the addresses associated with \emph{nodename} \\
-    \verb$res->ai_next$ & Points to the next element in the resulting linked list; typically we should traverse the list trying to open a socket using the data from the \verb$ai_family, ai_type, ai_protocol$ fields from the result. If we succeed, we are done traversing; if we fail, we try with the next entry\\
-    \bottomrule
-  \end{tabular}
-
-
-\item Now that we have the destination address in a suitable format, we can send a hello message. The function \emph{sendto} returns -1 on error, or the number of bytes actually sent, which can be different from the original number of bytes requested to be sent. We should be careful to test the return value.
-
-  The code containing setting up the destination address and port can be examined below (available as file 2-send.cc on Moodle).
-
-  \lstinputlisting{src/3-socket/2-send.cc}
-  
-\end{enumerate}
-
-
-\subsection{\ref{pl4.recv}}
-
-\begin{enumerate}[resume*]
-\item Now that we are able to send a packet to a netcap application, we can replace the receiving netcat application with our own program. Examine the documentation for function \emph{recvfrom} using the manual pages or Beej's guide. The return value is the same as for send().
-
-  \begin{lstlisting}
-#include <sys/types.h>
-#include <sys/socket.h>
-
-ssize_t recv(int s, void *buf, size_t len, int flags);
-ssize_t recvfrom(int s, void *buf, size_t len, int flags,
-                 struct sockaddr *from, socklen_t *fromlen);  
-  \end{lstlisting}
-
-  \begin{tabular}{l p{10cm}}
-    \toprule
-    Parameter & Description \\
-    \midrule
-    flags & Use 0 for plain receive \\
-    from & Address from where the packet was received \\
-    fromlen & The length of the address (it could be IPv6 or 4); initialize this parameter to the length of the data structure pointed to by parameter \emph{from}\\
-    \multicolumn{2}{l}{All other arguments are the same as for send()} \\
-    \bottomrule
-  \end{tabular}
-  
-\item In order to receive the packet, however, we need to know at which port the socket should be bound to, since we are sending the packet to a particular port. Assigning a socket to an IP address and port is called \emph{binding}. For the sender, the binding was done automatically: the socket was bound to the local IP address and an \emph{ephemeral} port number. To receive, we need to know (and thus we need to choose) the port number the application receives on.
-
-  We can call the \emph{bind} function for this. Examine the documentation for the bind function.
-
-  \begin{lstlisting}
-#include <sys/types.h>
-#include <sys/socket.h>
-
-int bind(int sockfd, struct sockaddr *my_addr, socklen_t addrlen);    
-  \end{lstlisting}
-
-  \begin{tabular}{l p{10cm}}
-    \toprule
-    Argument & Description \\ \midrule
-    sockfd & the socket we try to bind \\
-    \verb$my_addr$ & address and port number we want to bind to; use \emph{getaddrinfo} with the \verb$AI_PASSIVE$ flag in the hints argument (with a NULL pointer for the host name) to get the address of the local host \\
-    \bottomrule
-  \end{tabular}
-
-\item Copy the source code for the sending program and change the code so that you bind the socket to a known port number. For this, you will need to adjust some parameters in the \emph{getaddrinfo} function so that you extract the address of the local host and supply the port number you choose to receive from.
-
-\item Bind the socket to the address returned by \emph{getaddrinfo}, Adjust the code so that you can receive one data packet with \emph{recvfrom}. The following lines of code might be helpful. Check also Beej's guide.
-
-  \lstinputlisting[firstline=50]{src/3-socket/3-recv.cc}
-
-\end{enumerate}
-
-  
-
-\section{Exercises}
-
-\begin{enumerate}[label=\arabic*.]
-\item Adjust the sender and receiver programs you developed during the activities so that the receiver immediately bounces back to the sender the message it receives. Change the code so that the sender reads the message from the input.
-
-  More precisely, the receiver must figure out the source address and port number for the message it receives and it must send it back from where it came. Both applications must print on the console the message received.
-
-  Sample execution log is provided below. Note that 3000 is the port number and receiver\_address should be replaced by the host name or IP address of the computer running the receiver.
-
-\begin{verbatim}
-The receiver terminal window:
-$ receiver 3000
-Received: Hello.
-$
-\end{verbatim}
-
-\begin{verbatim}
-The sender terminal window:
-$ sender receiver_address 3000
-Enter a message: Hello.
-Received: Hello.
-$
-\end{verbatim}
 
 \end{enumerate}
 
