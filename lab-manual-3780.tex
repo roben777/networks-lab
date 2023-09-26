@@ -532,6 +532,32 @@ Write a small C++ program that reads one byte value from the input (a positive i
 
 
 
+\subsection{\ref{pl3.head}}
+
+\begin{enumerate}[resume*]
+\item Download the header class implementation and the corresponding google tests from the file 2-header.zip on Moodle, under Lab resources / Project source files. Unpack the contents into a working directory.
+
+\item Examine the class header file and read the comments for each member function. 
+
+Answer the following questions about the code:
+\begin{enumerate}[label=(\alph*)]
+\item Which member function sets the \emph{Val} field of the header?
+\item What is the range of values for the \emph{Val} field?
+\item What is the documented behaviour for the setter of \emph{Val}? Does the function implement the documented behaviour?
+\end{enumerate}
+  
+\item Read the primer on Google tests, if you are not familiar with this framework.
+
+\item Examine the test code, and identify the functions that are tested.
+
+\item Build the test code using the Makefile provided. Are there any failed tests?
+
+\item Add a test case for the getter of field \emph{Val}. Check if the test passes and correct the code if necessary. Notice that your test should assign a value to the first byte in the header class based on your manual calculation of the field, then it should call the getter.
+
+\item Add a third test case that tests the behaviour of the setter of \emph{Val} when we attempt to set it to a value outside of its range. See that the test fails first, and then fix the code.
+\end{enumerate}
+
+
 \section{Exercises}
 
 \begin{enumerate}[label=\arabic*.]
@@ -560,15 +586,11 @@ Write a small C++ program that reads one byte value from the input (a positive i
 +------------------------------------+
 \end{verbatim}
 
+You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
 Implement a concrete class that manages the fields from the first 32 bits of this header: Type, Window, Seq num, Length, and CRC1. Implement setter and getter functions for these fields and test their correctness using Google tests.
 
-Design the class so that it implements the following responsibilities. This list is chosen to facilitate its reuse in your project.
+A specific class design is suggested in Appendix \ref{header.class} to facilitate the reuse for this code in your project. The design is optional; you are encouraged to apply the knowledge gained in courses such as CPSC 2720 and CPSC 3720.
 
-\begin{itemize}
-\item 
-\end{itemize}
-
-You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
 \end{enumerate}
 
 
@@ -597,36 +619,9 @@ In this lab, the students will develop and test the logic for manipulating seque
 
 \section{Lab activities}
 
-
-\subsection{\ref{pl3.head}}
-
-\begin{enumerate}[resume*]
-\item Download the header class implementation and the corresponding google tests from the file 2-header.zip on Moodle, under Lab resources / Project source files. Unpack the contents into a working directory.
-
-\item Examine the class header file and read the comments for each member function. 
-
-Answer the following questions about the code:
-\begin{enumerate}[label=(\alph*)]
-\item Which member function sets the \emph{Val} field of the header?
-\item What is the range of values for the \emph{Val} field?
-\item What is the documented behaviour for the setter of \emph{Val}? Does the function implement the documented behaviour?
-\end{enumerate}
-  
-\item Read the primer on Google tests, if you are not familiar with this framework.
-
-\item Examine the test code, and identify the functions that are tested.
-
-\item Build the test code using the Makefile provided. Are there any failed tests?
-
-\item Add a test case for the getter of field \emph{Val}. Check if the test passes and correct the code if necessary. Notice that your test should assign a value to the first byte in the header class based on your manual calculation of the field, then it should call the getter.
-
-\item Add a third test case that tests the behaviour of the setter of \emph{Val} when we attempt to set it to a value outside of its range. See that the test fails first, and then fix the code.
-\end{enumerate}
-
-
 \subsection{\ref{pl3.abs}}
 
-\begin{enumerate}[resume*]
+\begin{enumerate}[label=Activity \arabic*:]
 \item Revisit the lecture notes about the sliding window protocol with go-back-N. Examine the examples that describe the behaviour of the sender and the receiver as they react to various events. 
 
 \item On a sheet of paper, list the responsibilities you would assign to a class that manages the sequence numbers and the sliding window for the sender. Make another list for the class managing the responses of the receiver. As an example, a partial list for the sender is proposed below.
@@ -1931,8 +1926,20 @@ rtt min/avg/max/mdev = 0.095/0.101/0.110/0.010 ms
   \end{enumerate}
 \end{enumerate}
 
-
 \end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\chapter{Suggested design for a class that maintains the project protocol headers}\label{hedaer.class}
+
+To maximize the reuse of the packet header code in Exercise \ref{}, the following list of responsibilities is proposed to facilitate the reuse of this code in your project.
+
+\begin{itemize}
+\item 
+\end{itemize}
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
