@@ -311,7 +311,7 @@ A condition variable can be used by threads to signal each other. We can explore
 
   Write a program that constructs a condition variable and then notifies the condition variable.
 
-  \lstinputlisting{src/2-timers/2-notify.cc}
+  \lstinputlisting[title=2-notify.cc]{src/2-timers/2-notify.cc}
 
 \item Compile and execute the program:
 
@@ -326,7 +326,7 @@ After notify
 
 \item Modify the code from \ref{pa2.unu} to create two threads that use the same condition variable.
 
-  \lstinputlisting{src/2-timers/2-threads.cc}
+  \lstinputlisting[title=2-threads.cc]{src/2-timers/2-threads.cc}
 
   Compile and run the program several times. What do you notice? Nothing interesting, the threads that call \emph{notify} repeatedly on the condition variable don't seem to be affected by the condition variable.
 
@@ -334,7 +334,7 @@ After notify
 
   Write a program with two threads. One thread, the sleeper, waits on the condition variable. The other notifies the condition variable after a delay of 1 sec. Compile, run, and check that the sleeper thread wakes up.
 
-  \lstinputlisting{src/2-timers/2-sleeper.cc}
+  \lstinputlisting[title=2-sleeper.cc]{src/2-timers/2-sleeper.cc}
 \end{enumerate}
 
 \subsection{Lab activities: \ref{doi.l2}}\label{wakesleep.se}
@@ -370,9 +370,9 @@ After notify
 
 
 %%%%%%%%%%%%%%%%%
-\chapter{Lab N3: packet headers, sliding windows}
+\chapter{Lab N3: packet headers}
 
-In this lab, the students will start to develop code for setting and extracting information from binary packet headers. The students will also develop and test the logic for manipulating sequence numbers and sliding windows. Google unit tests will be very useful to test these important project components, and, if students are familiar with test driven development, they can be also used for development.
+In this lab, the students will start to develop code for setting and extracting information from binary packet headers. 
 
 \section{Objectives}
 
@@ -380,18 +380,12 @@ In this lab, the students will start to develop code for setting and extracting 
   \item\label{pl3.maps} Students will read and create bit header maps for various headers. 
 \item\label{pl3.bit} Students will use shift and bit-wise operations to set and get bit fields that are smaller than 8 bits.
 \item\label{pl3.byte} Students will use shift, bit-wise, and array access operations to manipulate numerical fields that are multiples of 8 bits, stored in big-endian or network byte order.
-\item\label{pl3.head} Students will modify a C++ class that manipulates header fields. Students will use Google tests to test this header management class.
-\item\label{pl3.abs} Students will define, on paper, abstract classes for the sliding window protocol for the sender and the receiver.
-\item\label{pl3.test} Students will document the behaviour of the sliding window methods using \emph{acceptance tests}.
-  \item\label{pl3.impl} Students will implement concrete classes for the sender and receiver sliding window module; students will write Google tests for their acceptance tests.
 \end{enumerate}
 
 \subsection{Resources}
 
 \begin{itemize}[label=--]
 \item Bit-wise and shift operators in C++: \url{https://www.geeksforgeeks.org/bitwise-operators-in-c-cpp/}
-\item Google test primer: \url{https://google.github.io/googletest/primer.html}
-\item Learning TDD with katas (optional): \url{https://social.technet.microsoft.com/wiki/contents/articles/30940.learning-test-driven-development-with-tdd-katas.aspx}
 \end{itemize}
 
 
@@ -466,22 +460,57 @@ Provide the value of the header if Val is 2 (in decimal), X is 51 (in decimal), 
 \subsection{\ref{pl3.bit}}
 
 \begin{enumerate}[resume*]
-\item Consider the first byte in the header above. Suppose we want to assign  Val the value 2 while keeping the value of X unmodified. Describe a sequence of bitwise operations that achieves this. Recall that all bitwise operations involve byte values. For example, if $b_1 = 1000.0100$ and $b_2 = 0100.1100$ then the bitwise OR between $b_1$ and $b_2$ is $1100.1100$. What is the bitwise AND between $b_1$ and $b_2$?
+\item Review the meaning of bitwise operations in C++. Note that all bitwise operations involve byte values. For example, if $b_1 = 1000.0100$ and $b_2 = 0100.1100$ then the bitwise OR between $b_1$ and $b_2$ is $1100.1100$.
+
+  What is the bitwise AND between $b_1$ and $b_2$?
+
+  What is the bitwise OR between the byte values 0xA and 0x5? What is the bitwise AND between these values? What are the bitwise OR and then the bitwise AND between 0xA and 0x6? Consult online resources to answer these questions.
+
+\item Write a small C++ program that reads two positive integers in the range 0-255 from the input and then it outputs the result of the bitwise AND between these values in hexadecimal. Consult the STL documentation detailing the output stream functions and manipulators. Test with the values 0xA (10) and 0x6 (6).
+  
+\item Consider the first byte in the header above. Suppose we want to assign  field Val the value 2 while keeping the value of X unmodified.
+
 \begin{verbatim}
  0   1 2   7 
 +=====+=====+
 | Val |  X  |
+|  1  |     |
++=====+=====+
+\end{verbatim}
+
+  One way to do this is to create two byte values that we then bitwise OR together, as shown below.
+
+\begin{verbatim}
+ 0   1 2   7 
++=====+=====+
+| Val |  X  |
+| 00  |     |
++=====+=====+
+  bitwise OR
+ 0   1 2   7 
++=====+=====+
+| Val | 000 |
 |  2  |     |
 +=====+=====+
 \end{verbatim}
 
-Hint: consider the bitwise OR between 2|0 and 0|X.
+Write a small C++ program that reads one byte value from the input (a positive integer in the range 0-255) and clears the two most significant bits corresponding to the field \emph{Val} above while leaving the remaining 6 least significant bits unchanged. Output the result in hexadecimal. For this example, consider clearing by computing the bitwise AND of the value with the binary value ``0011 1111''. What is the hexadecimal value for this 8 bit sequence?
 
-\item Describe now the sequence of bitwise operations that sets the field X to some given value $\alpha$, without changing Val.
+\item Modify your code above so that it reads from input the value of field \emph{Val} as an integer. For example, the possible values are 0, 1, 2, and 3 given that field \emph{Val} has only 2 bits. Your program should then output the value shifted left to the position of field \emph{Val} as ilustrated in the diagram below. Use the bitwise shift left C++ operator and shift over 6 bit positions.
 
-\item Describe the sequence of bitwise operations that sets Val to some given value $\beta$ while leaving X unchanged.
+\begin{verbatim}
+ 0   1 2   7 
++=====+=====+
+| Val | 000 |
++=====+=====+
+\end{verbatim}
 
-  Hint: shift $\beta$ to the left by 6 positions.
+
+
+\item Putting everything together: write a small C++ program that reads two positive integer values $v_1$ and $v_2$ from the input. Then write the hexadecimal value of the byte corresponding to the \emph{Val} and \emph{X} fields above. Test and make sure your code is correct.
+
+\item Extend your program so that it inputs three positive integers $v_1$, $v_2$, and $v_3$. Write the hexadecimal 8 bit value corresponding to $v_1,v_2$ as above, but then alswo write the hexadecimal value of the byte where field \emph{Val} is assigned $v_3$ while field \emph{X} remains unchanged to value $v_2$. 
+
   
 \end{enumerate}
 
@@ -500,6 +529,73 @@ Hint: consider the bitwise OR between 2|0 and 0|X.
 
  \item Suppose the payload length is represented by some value $\gamma$. Describe a sequence of operations using assignment and shifts to set the payload length to $\gamma$. 
 \end{enumerate}
+
+
+
+\section{Exercises}
+
+\begin{enumerate}[label=\arabic*.]
+\item Consider the following header map, taken for the header you need to implement for your project:
+\begin{verbatim}
+ 01 2 3 7 8     15 16     23 24    31
++--+-+---+--------+---------+--------+
+|Ty|T|Win|  Seq   |      Length      |
+|pe|R|dow|  num   |                  |
++--+-+---+--------+---------+--------+
+|        Timestamp (4 bytes)         |
+|                                    |
++------------------------------------+
+|           CRC1 (4 bytes)           |
+|                                    |
++------------------------------------+
+|                                    |
+|                                    |
++                                    +
+.       Payload (max 512 bytes)      .
+.                                    .
+.                                    .
++------------------------------------+
+|     CRC2 (4 bytes, optional)       |
+|                                    |
++------------------------------------+
+\end{verbatim}
+
+Implement a concrete class that manages the fields from the first 32 bits of this header: Type, Window, Seq num, Length, and CRC1. Implement setter and getter functions for these fields and test their correctness using Google tests.
+
+Design the class so that it implements the following responsibilities. This list is chosen to facilitate its reuse in your project.
+
+\begin{itemize}
+\item 
+\end{itemize}
+
+You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
+\end{enumerate}
+
+
+
+%%%%%%%%%%%%%%%
+\chapter{Lab N4: sliding windows}
+
+In this lab, the students will develop and test the logic for manipulating sequence numbers and sliding windows. Google unit tests will be very useful to test these important project components, and, if students are familiar with test driven development, they can also be used during implementation.
+
+\section{Objectives}
+
+\begin{enumerate}[label=Objective \arabic*]
+\item\label{pl3.head} Students will modify a C++ class that manipulates header fields. Students will use Google tests to test this header management class.
+\item\label{pl3.abs} Students will define, on paper, abstract classes for the sliding window protocol for the sender and the receiver.
+\item\label{pl3.test} Students will document the behaviour of the sliding window methods using \emph{acceptance tests}.
+  \item\label{pl3.impl} Students will implement concrete classes for the sender and receiver sliding window module; students will write Google tests for their acceptance tests.
+\end{enumerate}
+
+\subsection{Resources}
+
+\begin{itemize}[label=--]
+\item Google test primer: \url{https://google.github.io/googletest/primer.html}
+\item Learning TDD with katas (optional): \url{https://social.technet.microsoft.com/wiki/contents/articles/30940.learning-test-driven-development-with-tdd-katas.aspx}
+\end{itemize}
+
+
+\section{Lab activities}
 
 
 \subsection{\ref{pl3.head}}
@@ -601,46 +697,16 @@ Answer the following questions about the code:
 \item\label{act.impl} Implement the concrete sliding window classes for the receiver and the sender. Implement the acceptance tests using Google tests. 
 \end{enumerate}
 
-
 \section{Exercises}
 
 \begin{enumerate}[label=\arabic*.]
-\item Consider the following header map, taken for the header you need to implement for your project:
-\begin{verbatim}
- 01 2 3 7 8     15 16     23 24    31
-+--+-+---+--------+---------+--------+
-|Ty|T|Win|  Seq   |      Length      |
-|pe|R|dow|  num   |                  |
-+--+-+---+--------+---------+--------+
-|        Timestamp (4 bytes)         |
-|                                    |
-+------------------------------------+
-|           CRC1 (4 bytes)           |
-|                                    |
-+------------------------------------+
-|                                    |
-|                                    |
-+                                    +
-.       Payload (max 512 bytes)      .
-.                                    .
-.                                    .
-+------------------------------------+
-|     CRC2 (4 bytes, optional)       |
-|                                    |
-+------------------------------------+
-\end{verbatim}
-
-Implement a concrete class that manages the fields from the first 32 bits of this header: Type, TR, Window, Seq num, and Length. Implement setter and getter functions for these fields and test their correctness using Google tests.
-
-You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
-
 \item Complete Activity \ref{act.impl} from Section \ref{sec.impl}. Implement the behaviour corresponding to the \textbf{selective repeat sliding window protocol}. Can you design your class so that you use the same interface you created for the go-back-N sliding window protocol during the lab activities? 
 \end{enumerate}
 
 
 %%%%%%%%%%%%%%%%%%%
 
-\chapter{Lab N4: sending and receiving network packets using sockets}
+\chapter{Lab N5: sending and receiving network packets using sockets}
 
 In this lab, the students will send and receive packets of data, from a C++ or C program, to another program or application.
 
