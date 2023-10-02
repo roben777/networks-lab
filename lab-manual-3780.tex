@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.3.0}  %   Use current date. 
+\date{\today\\ version 3.3.1}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -380,6 +380,7 @@ In this lab, the students will start to develop code for setting and extracting 
   \item\label{pl3.maps} Students will read and create bit header maps for various headers. 
 \item\label{pl3.bit} Students will use shift and bit-wise operations to set and get bit fields that are smaller than 8 bits.
 \item\label{pl3.byte} Students will use shift, bit-wise, and array access operations to manipulate numerical fields that are multiples of 8 bits, stored in big-endian or network byte order.
+\item\label{pl3.head} Students will modify a C++ class that manipulates header fields. Students will use Google tests to test this header management class.
 \end{enumerate}
 
 \subsection{Resources}
@@ -515,7 +516,7 @@ Write a small C++ program that reads one byte value from the input (a positive i
 \end{enumerate}
 
 
-\subsection{\ref{pl3.byte}}
+\subsection{\ref{pl3.byte}}\label{header.subsec}
 
 \begin{enumerate}[resume*]
 \item Consider the 32 bit header below. View it as an array $b[]$ of 4 byte values. Describe a sequence of assignment operations that set the payload length to the hexadecimal value 0x1234.
@@ -532,12 +533,24 @@ Write a small C++ program that reads one byte value from the input (a positive i
 
 
 
-\subsection{\ref{pl3.head}}
+\subsection{\ref{pl3.head}}\label{headclass.subsec}
+
+To facilitate the reuse of the code you develop in this lab in your project, a C++ class that manages the fields of the header from Section \ref{header.subsec} is provided. The class implements the following list of responsibilities.
+\begin{itemize}[label=--]
+\item Can be initialized with the address of any externally allocated buffer.
+\item Sets header fields for this buffer.
+\item Returns the value of the header fields present in this buffer.
+\item Note: the class does not allocate the buffer. The buffer must be already allocated.
+\end{itemize}
+
+This choice of responsibilities aims to keep the overall design simple and the class flexible. 
+You may extend this class and use it for your project, or you can develop a different class based on a different set of responsibilities, as you see fit.
+
 
 \begin{enumerate}[resume*]
-\item Download the header class implementation and the corresponding google tests from the file 2-header.zip on Moodle, under Lab resources / Project source files. Unpack the contents into a working directory.
+\item Download the header class implementation and the corresponding google tests from the folder \emph{3-header} on Moodle, under Labs / Source files for labs. Copy the contents into a working directory.
 
-\item Examine the class header file and read the comments for each member function. 
+\item Examine the class header file and read the comments for each member function. The test case code illustrate how the class is used: a buffer defined as a byte array (\lstinline$buffer_$) is allocated by the test code; the entries in this buffer may be initialized by the test code, simulating, for example, a received packet. The header class is initialized with this buffer and then getter member functions are used to extract the values of the header fields. Similarly, the header portion of the buffer can be initialized using the setter member functions, simulating how the buffer is prepared prior to sending the packet through the network.
 
 Answer the following questions about the code:
 \begin{enumerate}[label=(\alph*)]
@@ -547,6 +560,8 @@ Answer the following questions about the code:
 \end{enumerate}
   
 \item Read the primer on Google tests, if you are not familiar with this framework.
+
+  \url{https://google.github.io/googletest/primer.html}
 
 \item Examine the test code, and identify the functions that are tested.
 
@@ -589,7 +604,14 @@ Answer the following questions about the code:
 You need not know the meaning for these fields, yet. Just consider them to be positive integers from a suitable range of values that depends on their number of bits.
 Implement a concrete class that manages the fields from the first 32 bits of this header: Type, Window, Seq num, Length, and CRC1. Implement setter and getter functions for these fields and test their correctness using Google tests.
 
-A specific class design is suggested in Appendix \ref{header.class} to facilitate the reuse for this code in your project. The design is optional; you are encouraged to apply the knowledge gained in courses such as CPSC 2720 and CPSC 3720.
+You may extend the class desiged for Section \ref{headclass.subsec}. This class design is optional; you are encouraged to apply the knowledge gained in courses such as CPSC 2720 and CPSC 3720 when creating your class(es).
+
+Hints:
+\begin{itemize}[label=--]
+\item Define a getter and a setter function for each of the 5 fields listed.
+\item To test a setter function, allocate a buffer, initialize its entries using the assignment operator, run the setter function, and then test that the appropriate entries in the buffer have the expected values.
+  \item To test a getter function, allocate a buffer, initialize its entries using the assignment operator, and test that the getter function returns the expected value.
+\end{itemize}
 
 \end{enumerate}
 
@@ -603,7 +625,6 @@ In this lab, the students will develop and test the logic for manipulating seque
 \section{Objectives}
 
 \begin{enumerate}[label=Objective \arabic*]
-\item\label{pl3.head} Students will modify a C++ class that manipulates header fields. Students will use Google tests to test this header management class.
 \item\label{pl3.abs} Students will define, on paper, abstract classes for the sliding window protocol for the sender and the receiver.
 \item\label{pl3.test} Students will document the behaviour of the sliding window methods using \emph{acceptance tests}.
   \item\label{pl3.impl} Students will implement concrete classes for the sender and receiver sliding window module; students will write Google tests for their acceptance tests.
@@ -1927,18 +1948,6 @@ rtt min/avg/max/mdev = 0.095/0.101/0.110/0.010 ms
 \end{enumerate}
 
 \end{enumerate}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%
-\appendix
-\chapter{Suggested design for a class that maintains the project protocol headers}\label{hedaer.class}
-
-To maximize the reuse of the packet header code in Exercise \ref{}, the following list of responsibilities is proposed to facilitate the reuse of this code in your project.
-
-\begin{itemize}
-\item 
-\end{itemize}
-
 
 
 
