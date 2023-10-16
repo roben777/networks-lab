@@ -638,7 +638,84 @@ In this lab, the students will develop and test the logic for manipulating seque
 \end{itemize}
 
 
-\section{Lab activities}
+\section{Introduction and motivation}
+
+
+The networking project - writing code to implement transport layer functions in the presence of network layer errors - is sufficiently complex to justify the use of appropriate software design principles when developping it. Now is the perfect opportunity to apply the knowledge you gained in software engineering courses such as CPSC 2720 and CPSC 3720.
+
+This lab fosters the design of reusable code. Although the students are not required to adopt the concrete design approach introduced here, there are several fundamental principles that students are strongly recommended to follow.
+
+\begin{enumerate}[label= \arabic*.]
+\item Think about the project as a set of responsibilities. Software design is about assigning these responsibilities to classes in a way that promotes a modular system that is easy to write and maintain.
+\item Avoid class bloating, or assigning too many reponsibilities to a single class.
+\item Assign several responsibilities to one class if they are logically related.
+\end{enumerate}
+
+\paragraph{Examples:}
+
+The project is to develop two applications, a sender and a receiver, that will reliably transmit a file over the network despite the presence of network errors. Even if the details of the project are not known, we can still identify several high level responsibilities:
+
+\begin{enumerate}
+\item Read data from a file opened in binary mode.
+\item Write data to a binary file.
+\item Manage sequence numbers as per the sliding window protocol.
+\item Manage the buffers used for network communication.
+\item Encode and decode packet headers for the communication protocol.
+\item Send data packets.
+\item Resend data packets if timers expired.
+\end{enumerate}
+
+It may be beneficial to assign each responsiblity to a separate class that will implement it. 
+To define each class, think about refining the corresponding responsibility into a number of more concrete and detailed responsibilities. These will eventually determine the class interface.
+
+Resist the temptation to assign one single class the task of maintaining sequence numbers and also maintaining network buffers, for example. The resulting class will be complex and more difficult to maintain. It may be confusing at the beginning to just think about sequence numbers. Take some time to familiarize yourself with the list of responsibilities and the class interface suggested in Section \ref{seqnr.se}. Then consider the following possible high level description for the sender application. This will hopefully place your lab activities in context and will give you confidence to define and test a class for the sliding window protocol that can be reused in your project. 
+
+\subsection{Sketch of the sender application} 
+
+The sender will need to handle several events: receive network packets (acknowledgments), read data from a file, process events triggered by timers, etc. To simplify the implementation, we can define at least three threads that run independently of each other: a thread that reads network packets and processes acknowledgments, a thread that reads the file and creates the data packets, and a thread (or possibly several threads) that processes timers.
+
+Several objects in shared memory will allow these threads to synchronize in meaningful ways: an object maintaining sequence numbers and implementing the sliding window protocol, an object maintaining packet buffers, etc.
+
+\paragraph{Read data from file thread:}
+
+\begin{itemize}
+\item The thread asks the sliding window object whether a new sequence is available for a new data packet.
+\item If yes,
+
+  \begin{itemize}
+  \item  The thread reads one block of data from the file;
+  \item It assembles the packet;
+  \item It tells the sliding window object that the sequence number is used (advances the sliding window) and it asks the buffer object to keep a copy of the packet;
+  \item It initializes the corresponding timer;
+  \item It sends the packet.
+  \end{itemize}
+\item Repeat
+\end{itemize}
+
+\paragraph{Read acknowledgments thread:}
+
+\begin{itemize}
+\item If an acknowledgment is received and the sequence number falls within the window maintained by the sliding window object,
+  \begin{itemize}
+  \item It tells the sliding window object that a sequence number is acknowledged
+  \item It cancels the timer corresponding to the sequence number
+  \end{itemize}
+\item Repeat
+\end{itemize}
+
+\paragraph{Timer thread:}
+
+\begin{itemize}
+\item If a timer expires,
+  \begin{itemize}
+  \item Ask the buffer object to provide the saved packet;
+  \item Resends the packet;
+    \item Resets the timer.
+  \end{itemize}
+\item Repeat.
+\end{itemize}
+
+\section{Lab activities}\label{seqnr.se}
 
 \subsection{\ref{pl3.abs}}
 
