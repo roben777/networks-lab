@@ -1057,6 +1057,8 @@ int bind(int sockfd, struct sockaddr *my_addr, socklen_t addrlen);
 
   More precisely, the receiver must figure out the source address and port number for the message it receives and it must send it back from where it came. Both applications must print on the console the message received.
 
+  The programs must communicate using UDP and both IPv4 and IPv6. For the sender, the IP version can be inferred from the address passed as argument. For the receiver, use a command line argument (for example ``-6'' or ``-4'') to indicate which version to use.
+
   Sample execution log is provided below. Note that 3000 is the port number and receiver\_address should be replaced by the host name or IP address of the computer running the receiver.
 
 \begin{verbatim}
