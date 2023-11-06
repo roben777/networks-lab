@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.3.1}  %   Use current date. 
+\date{\today\\ version 3.3.2}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -1077,6 +1077,428 @@ $
 \end{verbatim}
 
 
+%%%%%%%%%%%%%%%%%%%
+
+\chapter{Lab N6: transport protocol for sending a short file}
+
+With this lab, the students will begin to integrate the components developed so far into a functional sender application that transmits a short file using the transport protocol described in Part \ref{protocol.part} of this manual. 
+
+\section{Objectives}
+
+\begin{enumerate}[label=Objective \arabic*]
+\item\label{pl6.bin} Students will write code that opens, reads, and writes data from a file in binary mode.
+\item\label{pl6.crc} Students will use library functions to write code that computes the CRC code for the data stored in a buffer.
+\item\label{pl6.ref} Students will use the reference implementation of the protocol to transfer one file from the sender to the receiver.
+\item\label{pl6.kath} (optional, needed if debugging) Students will run a \kathara\ virtual node that executes the receiver program and will capture the data frames and acknowledgments using \emph{tcpdump}.
+  \item\label{pl6.send} Students will develop a sender program that read one file with size maximum 512 bytes and sends it to the reference receiver.
+\end{enumerate}
+
+
+\section{Resources}\label{pl6.res}
+  
+  \begin{itemize}[label=--]
+  \item Source code for the lab activities, available from your CS lab account, in folder \emph{/home/lib3780/project/src/4-get\_data}.
+  \item C++ standard library reference: \url{https://en.cppreference.com/w/}
+  \item Working with binary files:
+\url{https://courses.cs.vt.edu/~cs2604/fall00/binio.html}
+    \item Zlib and calculating CRC32 values: \url{https://refspecs.linuxbase.org/LSB_3.0.0/LSB-Core-generic/LSB-Core-generic/zlib-crc32-1.html}
+  \end{itemize}
+
+
+\section{Lab activities}
+
+Work with your team.
+
+\subsection{\ref{pl6.bin}}\label{bin.pl6.se}
+
+\begin{enumerate}[label=Activity \arabic*)]
+\item Create a working directory for the lab activities. Copy the source files from the folder \emph{4-get\_data/} from Moodle into this working folder.
+
+  %%%%%
+\item Examine the contents of file \emph{create\_file.cc}. Understand the code, then compile it and execute it. A binary file with the name \emph{one.bin} should be created. Open the binary file using the command \emph{hexdump}. Is the contents of \emph{one.bin} correct?
+
+  \begin{lstlisting}
+    g++ -o create_file create_file.cc
+    ./create_file
+    hexdump -C one.bin
+  \end{lstlisting}
+
+\item Modify the source \emph{create\_file.cc} as follows. Using the same buffer of maximum 20 characters, add a loop and write 93 bytes in a file named \emph{two.bin}. The bytes written should have the value $0, 1, 2, \ldots, 92$ in this order. Use \emph{hexdump} to verify your outcome.
+
+\item Examine the contents of file \emph{open\_file.cc}. Understand the code, then compile it and execute it.
+
+\item Modify the source \emph{open\_file.cc} to read from a file until the end of the file is reached. Consult the document from the resources in Section \ref*{pl6.res}. You may choose to increase the buffer size. At the end, report the total number of bytes read. Open any other file with a larger size. Compare the number of bytes read as reported by your program with the size of the file listed with command \emph{ls -l}.
+
+\item Consult the resource about calculating the CRC32 value using library zlib. Open source \emph{crc32.cc}. Compile and execute the program.
+
+  \begin{lstlisting}
+    g++ -o crc32 crc32.cc -lz
+    ./crc32
+  \end{lstlisting}
+
+\end{enumerate}
+
+
+%%
+\subsection{\ref{pl6.crc}}
+
+\begin{enumerate}[resume*]
+\item Consult the resource about calculating the CRC32 value using library zlib. Open source \emph{crc32.cc}. Compile and execute the program.
+
+  \begin{lstlisting}
+    g++ -o crc32 crc32.cc -lz
+    ./crc32
+  \end{lstlisting}
+
+\end{enumerate}
+
+
+%%%
+\subsection{\ref{pl6.ref}}
+
+\begin{enumerate}[resume*]
+\item You must be logged into one of the lab computers. Copy the executable files for the reference implementation of the transport protocol from folder \verb$/home/lib3780/project/reference-implementation$.
+
+\item Read Section \ref{proto-ref.se} in Part \ref*{protocol.part} of this manual to find out how you can use the refernce executables to transfer a file.
+
+\item Execute the sender and the receiver on the same machine. Transfer the binary file you created in Section \ref{bin.pl6.se}. Use first IPv4, then use IPv6.
+
+\item Remote login to another workstation (\emph{student0} is a good choice), execute the sender on \emph{student0} and transfer the same file.
+\end{enumerate}
+
+
+%%
+\subsection{\ref{pl6.kath} (optional)}
+
+Complete these activities if you need to capture protocol packets sent by your program, for debugging purposes.
+
+\begin{enumerate}[resume*]
+\item Execute the activities from Chapter \ref{l1.intro.se} from Part \ref{kathara.part} pertaining to Objectives \ref{vstart}, \ref{hosthome}, and \ref{bridged}.
+
+\item Run the receiver from a \kathara\ virtual machine, in the background. Run \emph{tcpdump} to capture the trafic generated by the sender; examine the structure of the packets.
+\end{enumerate}
+
+
+%%
+\subsection{\ref{pl6.send}}
+
+\begin{enumerate}[resume*]
+\item You will need to complete Exercise \ref*{pl6.unu} from Section \ref*{pl6.ex}. For this, think about the minimal set of components you developed in the network programming labs, so far, that would be needed. A possible list is:
+  \begin{itemize}
+  \item Read from binary files.
+  \item CRC calculation.
+  \item Sockets.
+  \item Packet headers.
+  \end{itemize}
+
+\item To process command line arguments, search for appropriate libraries. Two possibilities: Boost.program\_options and Gnu's getopt.
+\end{enumerate}
+
+
+\section{Exercises}\label{pl6.ex}
+
+\begin{enumerate}
+\item \label{pl6.unu} Examine the protocol documentation from Chapter \ref{proto-doc.se}. Identify how the tranfer is initiated and how it ends. Write a sender program that successfully sends a file of size maximum 512 bytes to the reference receiver. Your sender program must use the command line arguments explained in the protocol documentation (Subsection \ref{proto-exe.se}).
+
+  No link errors are simulated. Use the sample packet capture file included with the reference implementation in case you need to examine sample data and ack packets.
+\end{enumerate}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\part{Transport protocol (project)}\label{protocol.part}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\must}{\textbf{MUST}}
+\newcommand{\should}{\textbf{SHOULD}}
+
+\newcommand{\pdata}{\texttt{PTYPE\_DATA}}
+\newcommand{\pack}{\texttt{PTYPE\_ACK}}
+\newcommand{\pnack}{\texttt{PTYPE\_NACK}}
+
+\newcommand{\sender}{\texttt{sender}}
+\newcommand{\receiver}{\texttt{receiver}}
+
+
+\chapter{Course transport protocol documentation}\label{proto-doc.se}
+
+\section{Acknowledgment}
+
+This protocol together with the reference implementation was designed by Dr.~Olivier Tilmans, formerly with UC Louvain, now at Nokia Bell Labs. This project description is translated and adapted from a project description by the same author, in French.
+
+\section{Project description}
+
+Your task is to implement the \emph{course transport layer} protocol, CTP, described below. The protocol allows the rapid and reliable transfer of one file from one computer to another. CTP uses the \emph{selective repeat} sliding window algorithm. The protocol does not use special acknowledgments to specify the out of sequence segments received, but it uses negative acknowledgments for a special scenario that involves out of sequence data packets (see the discussion about truncated packets below). CTP uses UDP segments over either IPv4 or IPv6.
+
+CTP is inspired by a proposal for a network stack optimized for data centres which appeared in a research article \cite{handley2017re}\footnote{The paper is an interesting read, but it is not necessary for the completion of this project.}.
+A \emph{special feature} of the network layer in the proposal is to strip off the payload from data segments when the buffers of the network switches get congested and to deliver only the headers which occupy much less space. This situation happens, for example, during bursts in traffic which are frequent in data centres.
+
+For this project, truncating data segments is simulated by a proxy server application called \verb$link_sim$. Instructions for accessing this binary together with any other resources, are provided on Moodle.
+A reference implementation of the protocol as a binary and a sample PCAP capture file are also available to use and experiment with.
+You must implement two programs, a \verb$sender$ and a \verb$receiver$. The sender and receiver transfer one file between two computers connected to the internet.
+
+\section{Specification}
+
+\subsection{Protocol}
+
+The structure of the segments for CTP is shown in Fig.~\ref{fig:format}. A segment contains the following fields:
+
+\begin{description}
+    \item[Type] This field is encoded on 2 bits. It indicates the type of the segment. Three types are possible:
+        \begin{enumerate}[label=(\alph*)]
+            \item \pdata\ = 1, indicates a packet containing data.
+            \item \pack\ = 2, indicates an acknowledgment packet.
+            \item \pnack\ = 3, indicates a negative acknowledgment of a data packet whose data was stripped off (thus the data packet had the field TR set to 1).
+        \end{enumerate}
+        Any other segment containing a different value \must\ be ignored.
+
+    \item[TR] This field is represented by 1 bit and indicates that the network has stripped off the payload from a data segment \pdata:
+    receiving a \pdata\ segment with field TR set to 1 requires the receiver to confirm with a \pnack\ packet. Notice that the sender will never set the TR field of a \pdata\ packet to 1 explicitly since this field is set by the network (simulated by \verb$sim_link$ in our case).
+    Any packet other than \pdata\ with TR set to 1 \must\ be ignored.
+
+    \item[Window] This field is an integer represented on 5 bits in the range [0 .. 31]. It indicates the size (expressed as the number of segments) of the receiving window of the source host. More precisely, the field indicates the number of \textbf{empty or available segments} in the receiving window of the source host. This value can change with time. If the source has no receiving window, the value of field Window \must\ be zero.
+
+    The sender CAN SEND a NEW data packet only if the destination host has previously replied with a \pack\ or \pnack\ with NON ZERO Window field. When a new connection is created (and the sender sends the first \pdata\ packet), the sender \must\ \emph{assume} that the receiver has advertised an initial Window value of 1 (one)\footnote{This means that the sender can only send one \pdata\ packet initially until it receives an acknowledgment with an updated Window field.}.
+
+    \item[Seqnum] This field is an 8 bit integer with value in the interval [0 .. 255]. Its meaning depends on the type of packet.
+
+        \begin{description}
+            \item[\pdata] It corresponds to the sequence number of the data packet. The sequence number of the first segment of a connection is 0 (zero). If this sequence number does not belong to the set of sequence numbers within the sliding window of the destination host, the destination host \must\ ignore this packet.
+
+            \item[\pack] It corresponds to the number of the next sequence expected, i.e., the last sequence number received + 1)$\pmod {2^8}$. It is possible to send a single \pack\ packet to acknowledge several \pdata\ packets (the principle of cumulative acknowledgments).
+
+            \item[\pnack] It corresponds to the sequence number of the truncated \pdata\ packet received. If this sequence number is not in the range of the sequence numbers covered by the sender's sliding window, the packet \must\ be ignored.
+        \end{description}
+
+         Once the source of the packet reaches sequence number 255, the following sequence number is 0 (zero).
+
+    \item[Length] This field is a 16 bit integer in network-byte-order, with the value in the range [0 .. 512]. It represents the number of bytes in the payload of the packet.
+
+    A \pdata\ packet with value 0 for this field for which the sequence number equals the sequence number of the last acknowledgment sent  by the receiver indicates to the receiver that the data transfer is completed. A possible truncation of the packet (TR field equals 1) will not change the value of the Length field and will still indicate the end of the transfer. If Length is greater than 512, the packed \must\ be ignored.
+
+    \item[Timestamp] This field takes 4 bytes and represents an unspecified value with unspecified endianness. For each \pdata\ packet sent, the sender chooses a value for this field. For a \pack\ packet, this value contains the Timestamp value from the \textbf{last} \pdata\ packet received\footnote{The meaning of the word \textbf{last} is vague in the original documentation. Is it last as in last sequence number, or is it last as in most recently received?}.
+
+    The significance of this field is at the discretion of the programmers.
+
+    \item[CRC1] This field is represented over 4 bytes, in network-byte-order. It contains the value obtained by applying the CRC32 algorithm\footnote{The divisor is the polynomial $x^{32} + x^{26} + x^{23} + x^{22} + x^{16} + x^{12} + x^{11} + x^{10} + x^8 + x^7 + x^5 + x^4 + x^2 + x + 1$, which is represented, in network-byte-order by the hex value $0\times04C11DB7$. CRC32 is implemented in \texttt{zlib.h}, but other implementations exist.
+    } to the header \textbf{with field TR set to 0} \footnote{Generally, \pdata\ packets are truncated by the network switches/routers but the CRC1 field is calculated by the source host and it is always 0 originally. Without this requirement, the network switches would need to recalculate the CRC1 field when they truncate the packet.}. When a packet is received at the destination, the CRC1 field \must\ be calculated with field TR set to 0 and the packet \must\ be ignored if the calculated and stored values differ.
+
+    \item[Payload] This field uses maximum 512 bytes. It contains the data transferred by the protocol. If TR is zero, the size of Payload is given by field Length, otherwise, its size is 0.
+
+    \item[CRC2] This field is represented over 4 bytes in network-byte-order. It contains the result of the CRC32 function over the payload, if present, before the packet is transmitted. The field is present only if the packet contains a payload and it is not truncated (the type is \pdata\ and TR must be 0). When a packet is received and this field is present, the CRC32 value must be calculated over the payload and the packet \must\ be ignored if the calculated and the stored CRC32 value are different.
+\end{description}
+\begin{figure}
+    \centering
+    \begin{minipage}{50ex}
+\begin{verbatim}
+ 01 2 3 7 8     15 16     23 24    31
++--+-+---+--------+---------+--------+
+|Ty|T|Win|  Seq   |      Length      |
+|pe|R|dow|  num   |                  |
++--+-+---+--------+---------+--------+
+|        Timestamp (4 bytes)         |
+|                                    |
++------------------------------------+
+|           CRC1 (4 bytes)           |
+|                                    |
++------------------------------------+
+|                                    |
+|                                    |
++                                    +
+.       Payload (max 512 bytes)      .
+.                                    .
+.                                    .
++------------------------------------+
+|     CRC2 (4 bytes, optional)       |
+|                                    |
++------------------------------------+
+\end{verbatim}
+    \end{minipage}
+    \caption{CTP packet format}\label{fig:format}
+\end{figure}
+
+\subsection{Network}
+The following assumptions about the network can be made:
+\begin{enumerate}
+    \item A segment once sent will be received at most once (\textbf{segments may be lost} but there are no duplicate segments).
+    \item The network may \textbf{corrupt the segments} in an arbitrary fashion.
+    \item The network may truncate the payload from \pdata\ segments in an arbitrary fasion.
+    \item Suppose two segments $S_1$ and $S_2$ are transmitted one before the other. The \textbf{order} in which $S_1$ and $S_2$ are received \textbf{is not guaranteed}.
+    \item The network \textbf{delay} to deliver a packet varies in the interval \textbf{[0 .. 2000 ms]}.
+\end{enumerate}
+
+\subsection{Executables}\label{proto-exe.se}
+
+To implement the protocol, you will create two computer programs named \sender\ and \receiver. The programs should accept the following command line arguments:
+
+\begin{verbatim}
+sender [-f data_file] host port
+receiver [-f data_file] [-6] port
+\end{verbatim}
+
+\begin{description}
+\item[host:] an IPv4 or IPv6 address or domain name. For the sender, it is the address of the receiver. Use the host address to select either IPv4 or IPv6 for the sender.
+\item [port:] The port number used by the protocol. For the sender, it is the port number where UDP packets will be sent. For the receiver, it is the port number where the receiver process listens to. A Wireshark dissector is available for debugging.  The dissector examines packets sent or received from ports 64341, 64342, and 12345, so use one of these ports if you plan to capture and examine the packets with Wireshark.
+\item [data\_file:] An optional parameter containing data to be transferred. The file may be a binary file.
+\item [-6:] For the receiver, this argument instructs the program to open a IPv6 socket.
+\end{description}
+
+\paragraph{Examples} (run in separate command windows on the same host):
+\begin{verbatim}
+  receiver -f data-received.txt 64341
+  sender -f data.txt 127.0.0.1 64341
+\end{verbatim}
+
+\paragraph{Notes} IPv4 address 127.0.0.1  is the loop-back address. It is an address that refers to the own host, so the example shows the case when the sender and the receiver are on executed on the same host. The IPv6 loop-back address is ::1.
+
+
+%%%%%%%
+\chapter{Reference implementation usage}\label{proto-ref.se}
+
+\section{Sender's command line arguments:}
+
+\begin{verbatim}
+./sender [OPTIONS] [host-address port]
+where OPTIONS can be any of the following:
+  --buf (or -b) nn
+  --filename (or -f) file
+\end{verbatim}
+
+\begin{enumerate}
+\item host-address (either IPv4 or IPV6): the address of the host where receiver will be run.
+\item port: the port number where the receiver will listen.
+
+  Since the host-address and the port are optional, if they are not provided, the default address is 0.0.0.0 (local address, IPv4), and port 12345.
+\item --buf (or -b) nn: limits the sending buffer to nn datagrams.
+  \item --filename (or -f) file: read the contents of the file \emph{file}. If the argument is missing, the standard input is used for reading. When the input source is the standard input, end the input with CTRL-D.
+\end{enumerate}
+
+
+\section{Receiver's command line arguments:}
+
+\begin{verbatim}
+./receiver [OPTIONS] [host-address port]
+where OPTIONS can be any of the following:
+  --buf (or -b) nn
+  --filename (or -f) file
+\end{verbatim}
+
+\begin{enumerate}
+\item host-address (either IPv4 or IPV6): the address of one of the network interfaces of the host where the program is run. It is provided as a way to select the protocol: IPv4 or IPv6. Use 0.0.0.0 (all IPv4 configured interfaces) or 127.0.0.1 (loop-back interface) for IPv5, or :: (all IPv6 configured interfaces) or ::1 (the loop-back interface) for IPv6.
+
+  If this argument is not present, then 0.0.0.0 is the default address.
+  
+\item port: the port number where the receiver will listen.
+
+  If the port is not provided, the default port number is 12345.
+\item --buf (or -b) nn: limits the receiving buffer to nn datagrams.
+  \item --filename (or -f) file: write the data received to the file \emph{file}. If the argument is missing, the standard output is used. 
+\end{enumerate}
+
+
+\section{Examples}
+
+\paragraph{Scenario:} sender and receiver both on the same host; the sender gets data from the console; the receiver displays data to the console, too. Protocol: IPv4.
+
+\begin{verbatim}
+$ ./receiver
+Resolving [0.0.0.0]:12345
+Waiting to receive data #0 from the remote endpoint
+[...]
+./sender 
+Resolving [0.0.0.0]:12345
+[...]
+\end{verbatim}
+
+\paragraph{Scenario:} sender on host A and reads data from the console. receiver on host B - B is an IPv6 address - and writes data to file ``out.txt''. Protocol used IPv6.
+
+\begin{verbatim}
+B $ ./receiver -f out.txt :: 12345
+Resolving [::]:12345
+Waiting to receive data #0 from the remote endpoint
+[...]
+A $ ./sender B 12345
+Resolving [B]:12345
+[...]
+\end{verbatim}
+
+
+%%%%%%%%%%%%
+\chapter{The link simulator}
+
+\section{Usage}
+
+To simulate transmission errors, the program must be run on the same host with the receiver. The program expects that data packets arrive on port given with option \emph{-p} and will forward the packet to the forwarding port given with option \emph{-P}. A help screen is displayed when the simulator is run with command line argument \emph{-h}.
+
+NOTE: the link simulator uses only IPv4.
+
+\begin{verbatim}
+$ ./link_sim -h
+Link sim: A simple lossy link simulator.
+This program will relay all incoming UDP traffic on port `port` to
+the loopback address [127.0.0.1], on port `forward_port`, simulating 
+random losses, transmission errors, ...
+
+Usage: ./link_sim [-p port] [-P forward_port] [-d delay] [-j jitter]
+                  [-e err_rate] [-c cut_rate] [-l loss_rate] [-s seed] [-h]
+-p port          The UDP port on which the link simulator operates.
+                 Defaults to: 1341
+-P forward_port  The UDP port on localhost on which the incoming traffic
+                 should be forwarded.
+                 Defaults to: 12345
+-d delay         The delay (in ms) that should be applied to the traffic.
+                 Defaults to: 0
+-j jitter        The jitter (in ms) that should be applied to the traffic.
+                 The total delay applied to one packet will be:
+                 delay + rand[-jitter, jitter].
+                 Defaults to: 0
+                 Unused if delay == 0.
+-e err_rate      The rate of packet corruption occurrence (in packet/100).
+                 Defaults to: 0
+                 A packet that has been corrupted will NOT be cut.
+-c cut_rate      The rate of packet being cut after the header to simulate
+                 router truncation due to high network load (in packet/100).
+                 Defaults to: 0
+                 A packet that has been cut will NOT be corrupted.
+-l loss_rate     The rate of packets loss (in packet/100).
+                 Defaults to 0
+-s seed          The seed for the random generator, to replay a previous
+                 session.
+                 Defaults to: time() casted to int
+-r               Simulate the link on the reverse path.
+-R               Simulate the link in both ways.
+-h               Prints this message and exit.
+\end{verbatim}
+
+
+\section{Examples}
+
+In the examples below, the sender, receiver, and the link simulator are run on the same machine.
+
+\begin{verbatim}
+$ ./link_sim 
+@@ Using random seed: 1699254984
+@@ Using parameters:
+.. port: 1341
+.. forward_port: 12345
+.. delay: 0
+.. jitter: 0
+.. err_rate: 0
+.. cut_rate: 0
+.. loss_rate: 0
+.. seed: 1699254984
+.. link_direction: Forward
+[...]
+
+$ ./receiver 
+Resolving [0.0.0.0]:12345
+Waiting to receive data #0 from the remote endpoint
+[...]
+
+$ ./sender 127.0.0.1 1341
+Resolving [127.0.0.1]:1341
+[...]
+\end{verbatim}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \part{Network tools and protocols}\label{kathara.part}
@@ -1116,7 +1538,7 @@ This section applies only if you wish to install \kathara\ at home. In the CS la
 %%%%%%%%%%%%%%%%%%%%%%%%%%55
 
 
-\chapter{Lab 1: introduction}
+\chapter{Lab 1: introduction}\label{l1.intro.se}
 
 
 \section{Objectives}
