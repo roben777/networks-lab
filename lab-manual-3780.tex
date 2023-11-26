@@ -1129,13 +1129,6 @@ Work with your team.
 
 \item Modify the source \emph{open\_file.cc} to read from a file until the end of the file is reached. Consult the document from the resources in Section \ref*{pl6.res}. You may choose to increase the buffer size. At the end, report the total number of bytes read. Open any other file with a larger size. Compare the number of bytes read as reported by your program with the size of the file listed with command \emph{ls -l}.
 
-\item Consult the resource about calculating the CRC32 value using library zlib. Open source \emph{crc32.cc}. Compile and execute the program.
-
-  \begin{lstlisting}
-    g++ -o crc32 crc32.cc -lz
-    ./crc32
-  \end{lstlisting}
-
 \end{enumerate}
 
 
@@ -1157,7 +1150,9 @@ Work with your team.
 \subsection{\ref{pl6.ref}}
 
 \begin{enumerate}[resume*]
-\item You must be logged into one of the lab computers. Copy the executable files for the reference implementation of the transport protocol from folder \verb$/home/lib3780/project/reference-implementation$.
+\item You must be logged into one of the lab computers. Copy the executable files for the reference implementation of the transport protocol from folder
+
+  \verb$/home/lib3780/project/reference-implementation$.
 
 \item Read Section \ref{proto-ref.se} in Part \ref*{protocol.part} of this manual to find out how you can use the refernce executables to transfer a file.
 
@@ -1197,7 +1192,7 @@ Complete these activities if you need to capture protocol packets sent by your p
 
 \section{Exercises}\label{pl6.ex}
 
-\begin{enumerate}
+\begin{enumerate}[label=\arabic*.]
 \item \label{pl6.unu} Examine the protocol documentation from Chapter \ref{proto-doc.se}. Identify how the tranfer is initiated and how it ends. Write a sender program that successfully sends a file of size maximum 512 bytes to the reference receiver. Your sender program must use the command line arguments explained in the protocol documentation (Subsection \ref{proto-exe.se}).
 
   No link errors are simulated. Use the sample packet capture file included with the reference implementation in case you need to examine sample data and ack packets.
