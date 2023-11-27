@@ -1196,6 +1196,10 @@ Complete these activities if you need to capture protocol packets sent by your p
 \item \label{pl6.unu} Examine the protocol documentation from Chapter \ref{proto-doc.se}. Identify how the tranfer is initiated and how it ends. Write a sender program that successfully sends a file of size maximum 512 bytes to the reference receiver. Your sender program must use the command line arguments explained in the protocol documentation (Subsection \ref{proto-exe.se}).
 
   No link errors are simulated. Use the sample packet capture file included with the reference implementation in case you need to examine sample data and ack packets.
+
+\item \label{pl6.doi} Write the receiver program which uses the command line arguments documented in the protocol description from Subsection \ref{proto-exe.se}. The receiver should just have enough features to correctly receive a short file of maximum 512 bytes from the reference sender program.
+
+  \item \label{pl6.trei} Extend the sender and the receiver files so that files larger than 512 bytes are transferred. No network errors are simulated yet, but the speed with which the sender and the receiver process data may be different. You will need to integrate the sliding window class and a buffer management class (see the project implementation discussion posted on Moodle), but you do not need to incorporate retransmission timers, yet. 
 \end{enumerate}
 
 
