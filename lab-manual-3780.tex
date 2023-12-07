@@ -1207,26 +1207,73 @@ Complete these activities if you need to capture protocol packets sent by your p
 %%%%%%%%%%%
 \chapter{Lab N7 (bonus): transport protocol with network errors}
 
-With this lab, the students will begin to integrate the components developed so far into a functional sender application that transmits a short file using the transport protocol described in Part \ref{protocol.part} of this manual. 
+In this lab, the students will use the error simulator application provided to test their implementation of the transport protocol. 
 
 \section{Objectives}
 
 \begin{enumerate}[label=Objective \arabic*]
+\item\label{pl7.unu} Students will execute the link simulator application and choose various network errors to test the reference implementation.
+  \item\label{pl7.doi} Students will simulate errors from sender to receiver, from receiver to sender, or in both directions.
 \end{enumerate}
 
 
 \section{Resources}\label{pl7.res}
   
-  \begin{itemize}[label=--]
+\begin{itemize}[label=--]
+\item The link error simulator command lines can be printed by executing the app with the ``-h'' argument. The following command lines are recognized.
+\begin{verbatim}
+$ ./link_sim -h
+Link sim: A simple lossy link simulator.
+This program will relay all incoming UDP traffic on port `port` to
+the loopback address [127.0.0.1], on port `forward_port`, simulating 
+random losses, transmission errors, ...
+
+Usage: ./link_sim [-p port] [-P forward_port] [-d delay] [-j jitter]
+                  [-e err_rate] [-c cut_rate] [-l loss_rate] [-s seed] [-h]
+-p port          The UDP port on which the link simulator operates.
+                 Defaults to: 1341
+-P forward_port  The UDP port on localhost on which the incoming traffic
+                 should be forwarded.
+                 Defaults to: 12345
+-d delay         The delay (in ms) that should be applied to the traffic.
+                 Defaults to: 0
+-j jitter        The jitter (in ms) that should be applied to the traffic.
+                 The total delay applied to one packet will be:
+                 delay + rand[-jitter, jitter].
+                 Defaults to: 0
+                 Unused if delay == 0.
+-e err_rate      The rate of packet corruption occurrence (in packet/100).
+                 Defaults to: 0
+                 A packet that has been corrupted will NOT be cut.
+-c cut_rate      The rate of packet being cut after the header to simulate
+                 router truncation due to high network load (in packet/100).
+                 Defaults to: 0
+                 A packet that has been cut will NOT be corrupted.
+-l loss_rate     The rate of packets loss (in packet/100).
+                 Defaults to 0
+-s seed          The seed for the random generator, to replay a previous
+                 session.
+                 Defaults to: time() casted to int
+-r               Simulate the link on the reverse path.
+-R               Simulate the link in both ways.
+-h               Prints this message and exit. 
+\end{verbatim}
   \end{itemize}
 
 
 \section{Lab activities}
 
 
-\subsection{}\label{cici.pl7.se}
+\subsection{\ref{pl7.unu}}
 
 \begin{enumerate}[label=Activity \arabic*)]
+\item The link simulator executable is located on the Linux computer lab in the \emph{/home/lib3780/project/link\_simulator} folder. Change into the directory and execute the simulator with option ``-h''.
+
+\item The link simulator receives UDP packets at port \emph{port} and forwards these packets, after possibly modifying them, to port \emph{foorward\_port}. Therefore, a simple way to run the the transfer through the link simulator is to run the link simulator on the same host as the receiver:
+  \begin{itemize}[label=--]
+  \item 
+  \end{itemize}
+  
 \end{enumerate}
 
 
