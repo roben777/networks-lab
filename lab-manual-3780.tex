@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.3.2}  %   Use current date. 
+\date{\today\\ version 3.3.3}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -676,7 +676,7 @@ The sender will need to handle several events: receive network packets (acknowle
 
 Several objects in shared memory will allow these threads to synchronize in meaningful ways: an object maintaining sequence numbers and implementing the sliding window protocol, an object maintaining packet buffers, etc.
 
-\paragraph{Read data from file thread:}
+\paragraph{Read data from file thread (sender):}
 
 \begin{itemize}
 \item The thread asks the sliding window object whether a new sequence is available for a new data packet.
@@ -686,28 +686,29 @@ Several objects in shared memory will allow these threads to synchronize in mean
   \item  The thread reads one block of data from the file;
   \item It assembles the packet;
   \item It tells the sliding window object that the sequence number is used (advances the sliding window) and it asks the buffer object to keep a copy of the packet;
-  \item It initializes the corresponding timer;
+  \item It resets the transmission timer;
   \item It sends the packet.
   \end{itemize}
 \item Repeat
 \end{itemize}
 
-\paragraph{Read acknowledgments thread:}
+\paragraph{Read acknowledgments thread (sender):}
 
 \begin{itemize}
 \item If an acknowledgment is received and the sequence number falls within the window maintained by the sliding window object,
   \begin{itemize}
   \item It tells the sliding window object that a sequence number is acknowledged
-  \item It cancels the timer corresponding to the sequence number
+  \item Cancel the timer if the sliding window is empty.
   \end{itemize}
 \item Repeat
 \end{itemize}
 
-\paragraph{Timer thread:}
+\paragraph{Timer thread (sender):}
 
 \begin{itemize}
 \item If a timer expires,
   \begin{itemize}
+    \item Check the sliding window content and retransmit the entire window.
   \item Ask the buffer object to provide the saved packet;
   \item Resends the packet;
     \item Resets the timer.
@@ -733,11 +734,11 @@ Several objects in shared memory will allow these threads to synchronize in mean
   \item Etc.
   \end{enumerate}
 
-\item Write header files for an abstract class (interface) for the sender sliding window and for the receiver sliding window. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by re-transmission timers or by actually storing segments. Focus only on sequence numbers.
+\item Write header files for an abstract class (interface) for the sender sliding window. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by re-transmission timers or by actually storing segments. Focus only on sequence numbers.
 
   Example:
   \begin{itemize}[label=--]
-  \item constructor(n): n represents the number of bits for sequence numbers.
+  \item setMaxSeqNr(n): n represents the number of bits for sequence numbers.
   \item canAddNew(): returns true if the sliding window can advance or expand to provide a new sequence number for an unconfirmed frame.
   \item addNew(): advances or expands the sliding window by one position, if possible. It returns the new sequence number that the sliding window expanded or advanced to. It returns -1 if the sliding window cannot incorporate a new sequence number (because it is at the maximum size already, for example).
   \item setWinSize(n): sets the max size of the sliding window to n.
@@ -745,6 +746,10 @@ Several objects in shared memory will allow these threads to synchronize in mean
   \item nrSeqInWin(): returns the number of unacknowledged sequences in the sliding window.
   \item Etc.
   \end{itemize}
+
+\item Write header files for an abstract class (interface) for the receiver sliding window. Although the receiver's management of received sequences is very simple for go-back-N, there is an added complication arising from practical considerations: the receiver may have received frames, but the frames received are not \emph{consumed/used} by the network layer above. The file system may be full and the received frames cannot be saved until more space is created in your account. 
+
+  For example, suppose the receiver can only save 4 frames of data in memory. It correctly receives 4 frames with sequence numbers 1,2,3 and 4 and saves these in its buffers. Although sequence 5 would be valid, the receiver should not acknowledge 5 until the layer above ``consumes'' 1 (writes data for frame 1 to disk), allowing frame 5 to be saved in its internal buffers. 
 \end{enumerate}
 
 
@@ -793,7 +798,11 @@ Several objects in shared memory will allow these threads to synchronize in mean
 \section{Exercises}
 
 \begin{enumerate}[label=\arabic*.]
-\item Complete Activity \ref{act.impl} from Section \ref{sec.impl}. Implement the behaviour corresponding to the \textbf{selective repeat sliding window protocol}. Can you design your class so that you use the same interface you created for the go-back-N sliding window protocol during the lab activities? 
+\item Complete Activity \ref{act.impl} from Section \ref{sec.impl}. Remember that you are implementing the behaviour corresponding to the \textbf{go-back-N sliding window protocol} and the interaction between a receiver and the ``sliding window'' class is very much simplified in this case.
+
+\item Refactor your design for the sliding window algorithm to incorporate a \textbf{selective-repeat} protocol. Can you design a \emph{sliding window} abstract class that can accommodate both go-back-N and selective-repeat? If yes, what would the design look like? If not, explain why.
+
+\item Design and implement a set of classes for the \emph{selective-repeat} sliding window protocol.
 \end{enumerate}
 
 
