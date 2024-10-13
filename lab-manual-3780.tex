@@ -57,7 +57,7 @@
 
 \title{Computer Networks - Laboratory manual}    % Supply information
 \author{Robert Benkoczi, University of Lethbridge}    %   for the title page.
-\date{\today\\ version 3.3.3}  %   Use current date. 
+\date{\today\\ version 3.4}  %   Use current date. 
 
 %%%%%% macros %%%%%%5
 \newcommand{\kathara}{Kathar\'a}
@@ -625,9 +625,9 @@ In this lab, the students will develop and test the logic for manipulating seque
 \section{Objectives}
 
 \begin{enumerate}[label=Objective \arabic*]
-\item\label{pl3.abs} Students will define, on paper, abstract classes for the sliding window protocol for the sender and the receiver.
-\item\label{pl3.test} Students will document the behaviour of the sliding window methods using \emph{acceptance tests}.
-  \item\label{pl3.impl} Students will implement concrete classes for the sender and receiver sliding window module; students will write Google tests for their acceptance tests.
+\item\label{pl3.abs} Students will sketch, on paper, the structure of one or more classes that implement the sliding window protocol for the sender and the receiver.
+\item\label{pl3.test} Students will document the behaviour of the sliding window classes using \emph{acceptance tests} for the proposed class methods.
+  \item\label{pl3.impl} Students will implement the sliding window classes for the sender and receiver; students will write Google tests for their acceptance tests.
 \end{enumerate}
 
 \subsection{Resources}
@@ -711,7 +711,7 @@ Several objects in shared memory will allow these threads to synchronize in mean
     \item Check the sliding window content and retransmit the entire window.
   \item Ask the buffer object to provide the saved packet;
   \item Resends the packet;
-    \item Resets the timer.
+    \item Re-starts the timer.
   \end{itemize}
 \item Repeat.
 \end{itemize}
@@ -720,7 +720,7 @@ Several objects in shared memory will allow these threads to synchronize in mean
 
 \subsection{\ref{pl3.abs}}
 
-\begin{enumerate}[label=Activity \arabic*:]
+\begin{enumerate}[label=Activity \arabic*:, ref=\arabic*]
 \item Revisit the lecture notes about the sliding window protocol with go-back-N. Examine the examples that describe the behaviour of the sender and the receiver as they react to various events. 
 
 \item On a sheet of paper, list the responsibilities you would assign to a class that manages the sequence numbers and the sliding window for the sender. Make another list for the class managing the responses of the receiver. As an example, a partial list for the sender is proposed below.
@@ -730,13 +730,21 @@ Several objects in shared memory will allow these threads to synchronize in mean
   \item Maintain the maximum size of the sliding window.
   \item Maintain the current size of the sliding window.
   \item Decide if a new sequence number can be assigned to a frame that can be transmitted for the first time (sliding window grows or moves to the right).
-  \item Processes acknowledged sequence numbers.
+  \item Update the state of the sliding window in response to a given  acknowledged sequence number.
   \item Etc.
   \end{enumerate}
 
-\item Write header files for an abstract class (interface) for the sender sliding window. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by re-transmission timers or by actually storing segments. Focus only on sequence numbers.
+\item When you identify the responsibilities for a sliding window algorithm for the receiver, consider the following complication that can arise in practice:  the receiver may have received frames in the correct order, but the frames received are not \emph{consumed/used} by the network layer above. A typical scenarion for our project is when your disk quota is full and the received frames cannot be saved until more space is created in your account. So, although a go-back-N receiver does not need to maintain a sliding window to confirm receipt of segments to the sender, it will need a sliding window to maintain the segments correctly received but not yet delivered to the layer above.
 
-  Example:
+    For example, suppose the receiver can only save 4 frames of data in memory. It correctly receives 4 frames with sequence numbers 1,2,3 and 4 and saves these in its buffers. Although sequence 5 would be valid, the receiver should indicate to the sender that it has no more room in its buffers to receive a 5-th frame until the layer above ``consumes'' some segments. 
+  
+  Spoiler alert: for the the course project protocol, the acknowledgement segments sent by the receiver include a \emph{windows size} parameter which indicates the available space in its receiving sliding window. One of the responsibilities of the receiver sliding window is to provide this value.
+  
+\item Assign the responsibilities you identified earlier to one or more classes. Take time to think about your allocation and try different approaches. Evaluate each approach by analyzing whether the classes are cohesive and/or the interfaces are complicated. Are there any responsibilities that can be shared among your classes? Answers to these questions will help you identify the structure for your classes.
+
+\item Once your class structure is identified, write the corresponding header files. Document the class member functions, describing the parameters and the return value. Note that you should not be concerned yet by re-transmission timers or by actually storing segments. Focus only on managing sequence numbers.
+
+  Example of a set of methods for a sender sliding window:
   \begin{itemize}[label=--]
   \item setMaxSeqNr(n): n represents the number of bits for sequence numbers.
   \item canAddNew(): returns true if the sliding window can advance or expand to provide a new sequence number for an unconfirmed frame.
@@ -746,10 +754,6 @@ Several objects in shared memory will allow these threads to synchronize in mean
   \item nrSeqInWin(): returns the number of unacknowledged sequences in the sliding window.
   \item Etc.
   \end{itemize}
-
-\item Write header files for an abstract class (interface) for the receiver sliding window. Although the receiver's management of received sequences is very simple for go-back-N, there is an added complication arising from practical considerations: the receiver may have received frames, but the frames received are not \emph{consumed/used} by the network layer above. The file system may be full and the received frames cannot be saved until more space is created in your account. 
-
-  For example, suppose the receiver can only save 4 frames of data in memory. It correctly receives 4 frames with sequence numbers 1,2,3 and 4 and saves these in its buffers. Although sequence 5 would be valid, the receiver should not acknowledge 5 until the layer above ``consumes'' 1 (writes data for frame 1 to disk), allowing frame 5 to be saved in its internal buffers. 
 \end{enumerate}
 
 
@@ -792,13 +796,14 @@ Several objects in shared memory will allow these threads to synchronize in mean
 \subsection{\ref{pl3.impl}}\label{sec.impl}
 
 \begin{enumerate}[resume*]
-\item\label{act.impl} Implement the concrete sliding window classes for the receiver and the sender. Implement the acceptance tests using Google tests. 
+\item\label{act.impl} Implement the concrete sliding window classes for the receiver and the sender. Implement the acceptance tests using Google tests. Make sure all tests pass. 
+
 \end{enumerate}
 
 \section{Exercises}
 
 \begin{enumerate}[label=\arabic*.]
-\item Complete Activity \ref{act.impl} from Section \ref{sec.impl}. Remember that you are implementing the behaviour corresponding to the \textbf{go-back-N sliding window protocol} and the interaction between a receiver and the ``sliding window'' class is very much simplified in this case.
+\item Complete Activity \ref*{act.impl} from Section \ref{sec.impl}. You are implementing the behaviour corresponding to the \textbf{go-back-N sliding window protocol} which is relatively easy, but the receiver needs to also provide some flexibility regarding the rate at which the correctly received segments are collected by the layer above. 
 
 \item Refactor your design for the sliding window algorithm to incorporate a \textbf{selective-repeat} protocol. Can you design a \emph{sliding window} abstract class that can accommodate both go-back-N and selective-repeat? If yes, what would the design look like? If not, explain why.
 
@@ -1177,7 +1182,7 @@ Work with your team.
 Complete these activities if you need to capture protocol packets sent by your program, for debugging purposes.
 
 \begin{enumerate}[resume*]
-\item Execute the activities from Chapter \ref{l1.intro.se} from Part \ref{kathara.part} pertaining to Objectives \ref{vstart}, \ref{hosthome}, and \ref{bridged}.
+\item Execute the activities from Chapter \ref{l1.intro.se} from Part \ref{kathara.part} pertaining to Objectives \ref{vstart}, \ref{hosthome.rf}, and \ref{bridged}.
 
 \item Run the receiver from a \kathara\ virtual machine, in the background. Run \emph{tcpdump} to capture the trafic generated by the sender; examine the structure of the packets.
 \end{enumerate}
@@ -1289,7 +1294,7 @@ Usage: ./link_sim [-p port] [-P forward_port] [-d delay] [-j jitter]
 \section{Exercises}\label{pl7.ex}
 
 \begin{enumerate}[label=\arabic*.]
-\item \label{pl7.unu}
+\item TBD.
 \end{enumerate}
 
 
@@ -1637,9 +1642,9 @@ In this lab, students will learn some basic commands and configuration options t
 \begin{enumerate}[label=Objective \arabic*]
   \item\label{vstart} Students will start a single device (docker container) with \kathara\ and will execute Unix commands including \emph{ifconfig} and \emph{ping}. This tests if their \kathara\ environment is correctly setup.
   \item\label{config} Students will adjust the configuration of their \kathara\ system by changing configuration files.
-  \item\label{hosthome} Students will transfer information between their virtual device and the host machine. Students will create files on their virtual devices that can be visible on their host machine, and vice-versa.
-  \item\label{image} Students will start and stop the execution of devices using different docker images for \kathara.
-    \item\label{bridged} Students will start a virtual device running the \emph{kathara/base} docker image and configured with one network interface linked to their host machine. Students will use test this network link with \emph{ping(6)}. 
+  \item \label{hosthome.rf} Students will transfer information between their virtual device and the host machine. Students will create files on their virtual devices that can be visible on their host machine, and vice-versa.
+  \item \label{image.rf} Students will start and stop the execution of devices using different docker images for \kathara.
+  \item\label{bridged} Students will start a virtual device running the \emph{kathara/base} docker image and configured with one network interface linked to their host machine. Students will use test this network link with \emph{ping(6)}. 
 \end{enumerate}
 
 
@@ -1751,7 +1756,7 @@ INFO - Device `pc1` deleted successfully!
 \end{enumerate}
 
 %%%%%%%%%%
-\section{Lab activities: \ref{image}}
+\section{Lab activities: \ref{image.rf}}
 
 \begin{enumerate}[resume*]
 \item The \emph{vstart} command has other options besides the mandatory argument \emph{-n}. Check \url{https://www.kathara.org/man-pages/kathara-vstart.1.html} for the man pages. In this activity, you will experiment with a few options for \emph{vstart}. In particular, we will look at the \emph{--image} option. The virtual device you started is actually a \emph{docker container} \cite{docker-useful}. A docker container is built from an \emph{image} which contains all the software needed for the docker application. When starting a virtual device, the default image used for your device is \emph{kathara/quagga}. This image contains packet routing software, \url{https://quagga.net/}. Some useful network tools, such as \emph{netcat} \cite{netcat}, are not available in the default image.
@@ -1810,7 +1815,7 @@ TIMESTAMP: 2021-09-04 17:02:43.932187
 \end{lstlisting}
 \end{enumerate}
 
-\section{Lab activities: \ref{hosthome}}
+\section{Lab activities: \ref{hosthome.rf}}
 
 \begin{enumerate}[resume*]
 \item One important feature of the network emulator is the ability of transferring information (for example network capture files) between the virtual devices and the host computer. On any virtual device, if the \kathara\ configuration option \verb$hosthome_mount$ is enabled, the host computer home directory is accessible to the virtual device via the directory \verb$/hosthome$ on the virtual device.
