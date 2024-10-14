@@ -803,9 +803,21 @@ Several objects in shared memory will allow these threads to synchronize in mean
 \section{Exercises}
 
 \begin{enumerate}[label=\arabic*.]
-\item Complete Activity \ref*{act.impl} from Section \ref{sec.impl}. You are implementing the behaviour corresponding to the \textbf{go-back-N sliding window protocol} which is relatively easy, but the receiver needs to also provide some flexibility regarding the rate at which the correctly received segments are collected by the layer above. 
+\item Complete Activity \ref{act.impl} from Section \ref{sec.impl}. You are implementing the behaviour corresponding to the \textbf{go-back-N sliding window protocol} which is relatively easy, but the receiver needs to also provide some flexibility regarding the rate at which the correctly received segments are collected by the layer above. Implement unit tests to show evidence that the following functions are correctly implemented:
+  \begin{enumerate}[label=(\alph*)]
+  \item (general) Sequence numbers are counted modulo $2^b$, where $b$ is the number of bits used for sequence numbers.
+  \item (sender) Process acknowledgements; there are at least two cases, sliding window can advance and the sliding window does not advance.
+  \item (sender) Obtain new sequence numbers to be added to the sliding window; two cases, sliding window full and not full.
+  \item (sender/receiver) Examine the content of the sliding window.
+  \item (receiver) Tell the sequence number that can be sent in an acknowledgement to the sender.
+  \item (receiver) Advance sliding window as data is consumed by the layer above; two cases - advancement possible and not possible.
+  \item (receiver) Add to the sliding window a sequence number correctly received from the sender; two cases - addition possible and not possible.
+  \item (receiver) Obtain the capacity of the sliding window (the number of sequences that can still be added to the sliding window).
+  \end{enumerate}
 
-\item Refactor your design for the sliding window algorithm to incorporate a \textbf{selective-repeat} protocol. Can you design a \emph{sliding window} abstract class that can accommodate both go-back-N and selective-repeat? If yes, what would the design look like? If not, explain why.
+  Hint: you may wish to  implement a general sliding window class that can advance, and adapt its use to the sender and receiver context. Marks are awarded for functionality and not for software design.
+
+\item Refactor your design for the sliding window algorithm to incorporate a \textbf{selective-repeat} protocol. Can you design a \emph{sliding window} general class that can accommodate both go-back-N and selective-repeat? If yes, what would the design look like? If not, explain why.
 
 \item Design and implement a set of classes for the \emph{selective-repeat} sliding window protocol.
 \end{enumerate}
