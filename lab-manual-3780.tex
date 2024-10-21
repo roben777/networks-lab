@@ -2171,7 +2171,7 @@ lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
 %%%%%%%%
 \section{Exercises}
 
-\begin{enumerate}
+\begin{enumerate}[label=\arabic*.]
 \item Start your \emph{3nodes} lab with hosts being assigned IPv4 and global IPv6 addresses. Start packet capture on \emph{pc3} and run \emph{ping6} from \emph{pc1} to \emph{pc2}, using link local and then the global IPv6 addresses (see Section \ref{tcpdump.se}). Examine the packets used by \emph{ping6} and compare them with the packets captured for IPv4 in Section \ref{tcpdump.se}. Shutdown the lab at the end.
   
 \item With your lab \emph{3nodes} started, run \emph{netcat} over the global IPv6 addresses and send a message from one host to another one. Use UDP or TCP. Shutdown the lab at the end.
@@ -2497,7 +2497,7 @@ rtt min/avg/max/mdev = 0.062/0.089/0.121/0.026 ms
 
 \section{Exercises}
 
-\begin{enumerate}
+\begin{enumerate}[label=\arabic*.]
 \item Start lab ``3lans''. Can you configure the routing tables for all four devices  using only default rules in such a way that \emph{pc1} is connected to \emph{pc2} and vice-versa?
 
 \item\label{ipv6.3.ex} (Target: \ref{addipv6}) Copy the lab files for ``3lans'' into a new directory named ``3lans.ipv6''. Assign the following IPv6 addresses to the three networks by editing the startup files for the lab (see Section \ref{ipv6.2.se}). The host suffix for the IPv6 addresses should match the host suffix for the IPv4 addresses.
